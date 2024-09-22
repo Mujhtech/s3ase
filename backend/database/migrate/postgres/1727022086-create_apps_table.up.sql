@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS apps (
+	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+	owner_id CHAR(26) NOT NULL REFERENCES users (id),
+	title TEXT NOT NULL,
+
+	bucket TEXT NOT NULL,
+	region TEXT NOT NULL,
+	app_url TEXT NULL DEFAULT NULL,
+
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	deleted_at TIMESTAMP
+);

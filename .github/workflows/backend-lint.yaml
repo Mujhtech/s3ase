@@ -1,0 +1,26 @@
+name: backend-lint
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  golangci:
+    name: CI linter for go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.0
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          args: --timeout=5m
+          version: latest
