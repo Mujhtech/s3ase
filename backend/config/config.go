@@ -24,7 +24,7 @@ var DefaultConfig = &Config{
 		Region: "eu-west-1",
 	},
 	Server: Server{
-		Port: 8080,
+		Port: 5555,
 		SSL:  false,
 	},
 }

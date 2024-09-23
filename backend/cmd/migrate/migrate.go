@@ -58,7 +58,7 @@ func addUpCommand() *cobra.Command {
 
 			defer db.Close()
 
-			migrator, err := migrate.Migrator(ctx, db)
+			migrator, err := migrate.Migrator(ctx, cfg, db)
 
 			if err != nil {
 				log.Err(err).Msg("failed to create migrator")
@@ -109,7 +109,7 @@ func addDownCommand() *cobra.Command {
 
 			defer db.Close()
 
-			migrator, err := migrate.Migrator(ctx, db)
+			migrator, err := migrate.Migrator(ctx, cfg, db)
 
 			if err != nil {
 				log.Err(err).Msg("failed to create migrator")

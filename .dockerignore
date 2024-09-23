@@ -1,0 +1,17 @@
+frontend/node_modules
+**/node_modules
+**/build
+.dockerignore
+.git
+README.md
+.dockerignore
+**/Dockerfile
+
+*.sqlite
+*.sqlite3
+release
+.idea
+coverage.out
+
+# ignore any executables we build
+/s3ase

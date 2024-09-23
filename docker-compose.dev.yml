@@ -1,0 +1,93 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: s3ase
+      POSTGRES_USER: s3ase
+      POSTGRES_DB: s3ase
+
+  redis:
+    image: redis
+    container_name: s3ase-redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+  db-migration:
+    container_name: s3ase-db-migration
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    entrypoint: ["./s3ase", "migrate", "up"]
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - 5555:5555
+    environment:
+      - DB_DRIVER=postgres
+      - DB_USER=s3ase
+      - DB_PASSWORD=s3ase
+      - DB_DATABASE=s3ase
+      - DB_HOST=db
+      - DB_PORT=5432
+    volumes:
+      - ./backend/src:/app/src
+
+  backend:
+    container_name: s3ase-api
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    entrypoint: ["./s3ase", "server"]
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      db-migration:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    ports:
+      - 5555:5555
+    environment:
+      - DB_DRIVER=postgres
+      - DB_USER=s3ase
+      - DB_PASSWORD=s3ase
+      - DB_DATABASE=s3ase
+      - DB_HOST=db
+      - DB_PORT=5432
+    volumes:
+      - ./backend/src:/app/src
+
+  frontend:
+    container_name: s3ase-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/src:/app/src/ # mounted whole src to avoid missing reload on new files
+      - ./frontend/public:/app/public
+    env_file: .env
+    environment:
+      - NODE_ENV=development
+      - SESSION_SECRET=s3ase
+
+volumes:
+  postgres-data:
+    driver: local
+  redis_data:
+    driver: local

@@ -7,6 +7,7 @@ import (
 	"io/fs"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database"
 	"maragu.dev/migrate"
 )
@@ -18,33 +19,30 @@ var postgres embed.FS
 var sqlite embed.FS
 
 const (
-	postgresDriverName = "postgres"
-	postgresSourceDir  = "postgres"
-
-	sqliteDriverName = "sqlite3"
-	sqliteSourceDir  = "sqlite"
+	postgresSourceDir = "postgres"
+	sqliteSourceDir   = "sqlite"
 )
 
-func Migrator(ctx context.Context, db *database.Database) (*migrate.Migrator, error) {
-	opts, err := getMigratorOpt(db.GetDB())
+func Migrator(ctx context.Context, cfg *config.Config, db *database.Database) (*migrate.Migrator, error) {
+	opts, err := getMigratorOpt(cfg.Database.Driver, db.GetDB())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get migrator opt: %w", err)
 	}
 	return migrate.New(opts), nil
 }
 
-func getMigratorOpt(db *sqlx.DB) (migrate.Options, error) {
+func getMigratorOpt(dbDriver config.DatabaseDriver, db *sqlx.DB) (migrate.Options, error) {
 
 	opts := migrate.Options{
 		FS: postgres,
 		DB: db.DB,
 	}
 
-	switch db.DriverName() {
-	case sqliteDriverName:
+	switch dbDriver {
+	case config.DatabaseDriverPostgres:
 		folder, _ := fs.Sub(sqlite, sqliteSourceDir)
 		opts.FS = folder
-	case postgresDriverName:
+	case config.DatabaseDriverSqlite3:
 		folder, _ := fs.Sub(postgres, postgresSourceDir)
 		opts.FS = folder
 
