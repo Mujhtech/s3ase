@@ -18,8 +18,6 @@ var postgres embed.FS
 var sqlite embed.FS
 
 const (
-	tableName = "migrations"
-
 	postgresDriverName = "postgres"
 	postgresSourceDir  = "postgres"
 

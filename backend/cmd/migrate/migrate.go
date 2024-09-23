@@ -7,6 +7,7 @@ import (
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database"
 	"github.com/mujhtech/s3ase/database/migrate"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,7 @@ func RegisterMigrateCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "migrate",
-		Short: "S3ase migration",
+		Short: "s3ase migration",
 		Run: func(cmd *cobra.Command, args []string) {
 
 		},
@@ -44,7 +45,7 @@ func addUpCommand() *cobra.Command {
 			cfg, err := config.LoadConfig()
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to load config")
 			}
 
 			ctx := context.Background()
@@ -52,7 +53,7 @@ func addUpCommand() *cobra.Command {
 			db, err := database.Connect(ctx, cfg)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to connect to database")
 			}
 
 			defer db.Close()
@@ -60,14 +61,16 @@ func addUpCommand() *cobra.Command {
 			migrator, err := migrate.Migrator(ctx, db)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to create migrator")
 			}
 
 			err = migrator.MigrateUp(ctx)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to migrate")
 			}
+
+			log.Info().Msg("migration completed")
 		},
 	}
 
@@ -93,7 +96,7 @@ func addDownCommand() *cobra.Command {
 			cfg, err := config.LoadConfig()
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to load config")
 			}
 
 			ctx := context.Background()
@@ -101,7 +104,7 @@ func addDownCommand() *cobra.Command {
 			db, err := database.Connect(ctx, cfg)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to connect to database")
 			}
 
 			defer db.Close()
@@ -109,15 +112,16 @@ func addDownCommand() *cobra.Command {
 			migrator, err := migrate.Migrator(ctx, db)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to create migrator")
 			}
 
 			err = migrator.MigrateDown(ctx)
 
 			if err != nil {
-				panic(err)
+				log.Err(err).Msg("failed to migrate")
 			}
 
+			log.Info().Msg("migration completed")
 		},
 	}
 
