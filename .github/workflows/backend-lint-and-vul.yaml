@@ -29,5 +29,5 @@ jobs:
         uses: golang/govulncheck-action@v1
         with:
           work-dir: ./backend
-          go-version-input: 1.22
+          go-version-input: 1.23
           go-package: ./...
