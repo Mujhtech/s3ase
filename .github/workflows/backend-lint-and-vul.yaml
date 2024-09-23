@@ -26,10 +26,8 @@ jobs:
           version: latest
           working-directory: ./backend
       - name: govulncheck
-        steps:
-          - id: govulncheck
-            uses: golang/govulncheck-action@v1
-            with:
-              go-version-input: 1.20.6
-              work-dir: ./backend
-              go-package: ./...
+        uses: golang/govulncheck-action@v1
+        with:
+          work-dir: ./backend
+          go-version-input: 1.20.6
+          go-package: ./...
