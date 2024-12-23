@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/mujhtech/s3ase/cmd/hooks"
 	"github.com/mujhtech/s3ase/cmd/migrate"
 	"github.com/mujhtech/s3ase/cmd/server"
 	"github.com/mujhtech/s3ase/cmd/version"
@@ -20,6 +21,10 @@ func main() {
 		Use:   "s3ase",
 		Short: "Simplifying S3 usage through open source.",
 	}
+
+	// regiser hooks
+	cmd.PersistentPreRunE = hooks.PreHook()
+	cmd.PersistentPostRunE = hooks.PostHook()
 
 	// Add subcommands
 	cmd.AddCommand(server.RegisterServerCommand())
