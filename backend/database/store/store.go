@@ -64,21 +64,21 @@ func ProcessSQLErrorfWithCtx(ctx context.Context, query string, err error, forma
 	}
 }
 
-func toDatabaseValue(value interface{}) interface{} {
-	if value == nil {
-		return nil
-	}
+// func toDatabaseValue(value interface{}) interface{} {
+// 	if value == nil {
+// 		return nil
+// 	}
 
-	switch v := value.(type) {
-	case string:
-		return v
-	case int:
-		return v
-	case int64:
-		return v
-	case bool:
-		return v
-	default:
-		return v
-	}
-}
+// 	switch v := value.(type) {
+// 	case string:
+// 		return v
+// 	case int:
+// 		return v
+// 	case int64:
+// 		return v
+// 	case bool:
+// 		return v
+// 	default:
+// 		return v
+// 	}
+// }
