@@ -10,9 +10,6 @@ jobs:
   lint-and-test:
     name: CI lint and test for frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -26,6 +23,7 @@ jobs:
 
       - name: ⎔ Setup node
         uses: buildjet/setup-node@v4
+        working-directory: ./frontend
         with:
           node-version: 20.11.1
           cache: "pnpm"
