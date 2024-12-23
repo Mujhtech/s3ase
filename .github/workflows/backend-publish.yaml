@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   goreleaser:
+    name: Publish backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
