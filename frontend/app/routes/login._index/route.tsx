@@ -7,19 +7,23 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 import { commitSession, setRedirectTo } from "~/services/redirect-to.server";
 import { requestUrl } from "~/services/request-url.server";
+import { env } from "~/env.server";
+import { Input } from "~/components/ui/input";
+import { useFeature } from "~/hooks/use-feature";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // redirect user to home is already logged in
 
   const url = requestUrl(request);
   const redirectTo = url.searchParams.get("redirectTo");
+  const backendUrl = env.BACKEND_URL;
 
   if (redirectTo) {
     const session = await setRedirectTo(request, redirectTo);
 
     return typedjson(
       {
-        redirectTo,
+        backendUrl,
       },
       {
         headers: {
@@ -29,13 +33,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     );
   } else {
     return typedjson({
-      redirectTo: null,
+      backendUrl,
     });
   }
 }
 
 export default function Page() {
   const data = useTypedLoaderData<typeof loader>();
+  const { is_github_auth_enabled, is_google_auth_enabled } = useFeature();
+
+  const isSocialAuthEnabled = is_github_auth_enabled || is_google_auth_enabled;
 
   return (
     <main className="h-full text-white">
@@ -50,28 +57,56 @@ export default function Page() {
               <p className="text-sm">Create an account or login to continue</p>
               <div className="flex flex-col gap-y-3 mt-6">
                 <Form
-                  action={`/auth/github${
-                    data.redirectTo ? `?redirectTo=${data.redirectTo}` : ""
-                  }`}
                   method="post"
-                  className="w-full"
+                  action="/login"
+                  className="grid grid-cols-1 gap-4"
                 >
-                  <Button className="w-full">
-                    <SiGithub className="mr-3 h-5 w-5" /> Continue with Github
+                  <Input placeholder="Email Address" />
+                  <Button
+                    className="w-full"
+                    type="button"
+                    onClick={() => {
+                      window.location.href = `${data.backendUrl}/ui/auth/github`;
+                      window.close();
+                    }}
+                  >
+                    Continue
                   </Button>
                 </Form>
-                <Form
-                  action={`/auth/google${
-                    data.redirectTo ? `?redirectTo=${data.redirectTo}` : ""
-                  }`}
-                  method="post"
-                  className="w-full"
-                >
-                  <Button className="w-full">
-                    <SiGoogle className="mr-3 h-5 w-5" />
-                    Continue with Google
-                  </Button>
-                </Form>
+
+                {isSocialAuthEnabled && (
+                  <>
+                    <p className="text-sm text-center">Or</p>
+
+                    {is_github_auth_enabled && (
+                      <Button
+                        className="w-full"
+                        type="button"
+                        onClick={() => {
+                          window.location.href = `${data.backendUrl}/ui/auth/github`;
+                          window.close();
+                        }}
+                      >
+                        <SiGithub className="mr-3 h-5 w-5" /> Continue with
+                        Github
+                      </Button>
+                    )}
+
+                    {is_google_auth_enabled && (
+                      <Button
+                        className="w-full"
+                        type="button"
+                        onClick={() => {
+                          window.location.href = `${data.backendUrl}/ui/auth/google`;
+                          window.close();
+                        }}
+                      >
+                        <SiGoogle className="mr-3 h-5 w-5" />
+                        Continue with Google
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

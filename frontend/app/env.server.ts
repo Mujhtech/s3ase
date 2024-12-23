@@ -7,7 +7,7 @@ const EnvironmentSchema = z.object({
     z.literal("test"),
   ]),
   SESSION_SECRET: z.string().default("s3cr3t"),
-  BACKEND_URL: z.string().default("http://localhost:5555"),
+  BACKEND_URL: z.string().default("http://localhost:5555/api"),
 });
 
 export type Environment = z.infer<typeof EnvironmentSchema>;

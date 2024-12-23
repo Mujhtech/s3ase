@@ -9,38 +9,37 @@ import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import "./tailwind.css";
 import { typedjson } from "remix-typedjson";
+import { getUser } from "./services/user.server";
+import { getFeatures } from "./services/feature.server";
 
-export const links: LinksFunction = () => [
-  // { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  // {
-  //   rel: "preconnect",
-  //   href: "https://fonts.gstatic.com",
-  //   crossOrigin: "anonymous",
-  // },
-  // {
-  //   rel: "stylesheet",
-  //   href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  // },
-];
+export const links: LinksFunction = () => [];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const feature = await getFeatures(request);
+
+  const user = await getUser(request);
+
   return typedjson({
-    user: null,
+    user: user,
+    feature: feature,
   });
 };
 
-export type LoaderType = typeof loader;
+export type RootLoaderType = typeof loader;
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="h-full overflow-hidden bg-background text-foreground antialiased !m-0">
+      <body
+        className="h-full overflow-hidden bg-background text-foreground antialiased !m-0"
+        suppressHydrationWarning
+      >
         {children}
         <ScrollRestoration />
         <Scripts />
