@@ -2,19 +2,19 @@ name: frontend-lint-and-test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint-and-test:
-  name: CI lint and test for frontend
-  runs-on: ubuntu-latest
-  steps:
-    - name: ⬇️ Checkout repo
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+    name: CI lint and test for frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: ⎔ Setup pnpm
         uses: pnpm/action-setup@v4
