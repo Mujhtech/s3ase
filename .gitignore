@@ -24,7 +24,7 @@
 .idea
 
 ## Vscode
-.vscode/settings.json
+.vscode
 
 ## Sqlite
 *.sqlite
@@ -40,3 +40,5 @@ s3ase
 # Dependency directories (remove the comment below to include it)
 node_modules
 dist
+
+dump.rdb
