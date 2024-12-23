@@ -34,11 +34,11 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/s3ase-backend:latest,ghcr.io/${{ github.repository }}/s3ase-backend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/s3ase-backend:latest,ghcr.io/mujhtech/s3ase-backend:latest
       - name: Build and push frontend
         uses: docker/build-push-action@v2
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/s3ase-frontend:latest,ghcr.io/${{ github.repository }}/s3ase-frontend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/s3ase-frontend:latest,ghcr.io/mujhtech/s3ase-frontend:latest
