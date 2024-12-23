@@ -1,4 +1,4 @@
-name: Backend publish
+name: backend-publish
 
 on:
   release:
