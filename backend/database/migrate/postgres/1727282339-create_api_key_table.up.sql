@@ -1,13 +1,13 @@
-CREATE TABLE IF NOT EXISTS apps (
+CREATE TABLE IF NOT EXISTS api_keys (
 	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-	owner_id uuid NOT NULL REFERENCES users (id),
+	app_id uuid NOT NULL REFERENCES apps (id),
+    created_by uuid NOT NULL REFERENCES users (id),
 	name TEXT NOT NULL,
-	slug TEXT NOT NULL,
 	description TEXT NULL DEFAULT NULL,
-
-	bucket TEXT NOT NULL,
-	region TEXT NOT NULL,
+    access api_key_access NOT NULL DEFAULT 'none',
+    expired_at BIGINT NULL DEFAULT NULL,
+	last_used TIMESTAMP NULL DEFAULT NULL,
 
 	metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
 

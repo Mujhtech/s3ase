@@ -40,10 +40,10 @@ func getMigratorOpt(dbDriver config.DatabaseDriver, db *sqlx.DB) (migrate.Option
 
 	switch dbDriver {
 	case config.DatabaseDriverPostgres:
-		folder, _ := fs.Sub(sqlite, sqliteSourceDir)
+		folder, _ := fs.Sub(postgres, postgresSourceDir)
 		opts.FS = folder
 	case config.DatabaseDriverSqlite3:
-		folder, _ := fs.Sub(postgres, postgresSourceDir)
+		folder, _ := fs.Sub(sqlite, sqliteSourceDir)
 		opts.FS = folder
 
 	default:

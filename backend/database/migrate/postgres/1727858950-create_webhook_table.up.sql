@@ -1,13 +1,11 @@
-CREATE TABLE IF NOT EXISTS apps (
+CREATE TABLE IF NOT EXISTS webhooks (
 	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-	owner_id uuid NOT NULL REFERENCES users (id),
+	app_id uuid NOT NULL REFERENCES apps (id),
+    created_by uuid NOT NULL REFERENCES users (id),
 	name TEXT NOT NULL,
-	slug TEXT NOT NULL,
 	description TEXT NULL DEFAULT NULL,
-
-	bucket TEXT NOT NULL,
-	region TEXT NOT NULL,
+    url TEXT NOT NULL,
 
 	metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
 

@@ -1,13 +1,12 @@
-CREATE TABLE IF NOT EXISTS apps (
+CREATE TABLE IF NOT EXISTS folders (
 	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-	owner_id uuid NOT NULL REFERENCES users (id),
-	name TEXT NOT NULL,
-	slug TEXT NOT NULL,
-	description TEXT NULL DEFAULT NULL,
+    app_id uuid NOT NULL REFERENCES apps (id),
+	created_by uuid NOT NULL REFERENCES users (id),
+    parent_id uuid NULL REFERENCES users (id) DEFAULT NULL,
 
-	bucket TEXT NOT NULL,
-	region TEXT NOT NULL,
+	name TEXT NOT NULL,
+	description TEXT NULL DEFAULT NULL,
 
 	metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
 
