@@ -15,11 +15,6 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   test: {
-    include: ["./app/**/*.test.{ts,tsx}"],
     restoreMocks: true,
-    coverage: {
-      include: ["app/**/*.{ts,tsx}"],
-      all: true,
-    },
   },
 });
