@@ -2,6 +2,7 @@
 #                   Build image                            #
 # ---------------------------------------------------------#
 FROM --platform=$BUILDPLATFORM golang:1.23-alpine3.20 AS builder
+RUN apk update && apk add --no-cache build-base musl-dev
 
 WORKDIR /app
 # RUN git config --global --add safe.directory '/app'
