@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/joho/godotenv"
 	"github.com/mujhtech/s3ase/config"
@@ -11,14 +12,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type Migration string
+
+const (
+	MigrationUp   Migration = "up"
+	MigrationDown Migration = "down"
+)
+
 func RegisterMigrateCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "s3ase migration",
-		Run: func(cmd *cobra.Command, args []string) {
+		// Run: func(cmd *cobra.Command, args []string) {
 
-		},
+		// },
 	}
 
 	cmd.AddCommand(addUpCommand())
@@ -39,35 +47,11 @@ func addUpCommand() *cobra.Command {
 		Short: "Run all pending migrations",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-
-			_ = godotenv.Load(configFile)
-
-			cfg, err := config.LoadConfig()
-
-			if err != nil {
-				log.Err(err).Msg("failed to load config")
-			}
-
-			ctx := context.Background()
-
-			db, err := database.Connect(ctx, cfg)
-
-			if err != nil {
-				log.Err(err).Msg("failed to connect to database")
-			}
-
-			defer db.Close()
-
-			migrator, err := migrate.Migrator(ctx, cfg, db)
-
-			if err != nil {
-				log.Err(err).Msg("failed to create migrator")
-			}
-
-			err = migrator.MigrateUp(ctx)
+			err := migration(configFile, MigrationUp)
 
 			if err != nil {
 				log.Err(err).Msg("failed to migrate")
+				return
 			}
 
 			log.Info().Msg("migration completed")
@@ -90,35 +74,11 @@ func addDownCommand() *cobra.Command {
 		Short: "Rollback the last migration",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-
-			_ = godotenv.Load(configFile)
-
-			cfg, err := config.LoadConfig()
-
-			if err != nil {
-				log.Err(err).Msg("failed to load config")
-			}
-
-			ctx := context.Background()
-
-			db, err := database.Connect(ctx, cfg)
-
-			if err != nil {
-				log.Err(err).Msg("failed to connect to database")
-			}
-
-			defer db.Close()
-
-			migrator, err := migrate.Migrator(ctx, cfg, db)
-
-			if err != nil {
-				log.Err(err).Msg("failed to create migrator")
-			}
-
-			err = migrator.MigrateDown(ctx)
+			err := migration(configFile, MigrationDown)
 
 			if err != nil {
 				log.Err(err).Msg("failed to migrate")
+				return
 			}
 
 			log.Info().Msg("migration completed")
@@ -129,4 +89,48 @@ func addDownCommand() *cobra.Command {
 
 	return cmd
 
+}
+
+func migration(configFile string, migration Migration) error {
+
+	_ = godotenv.Load(configFile)
+
+	cfg, err := config.LoadConfig()
+
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	ctx := context.Background()
+
+	db, err := database.Connect(ctx, cfg)
+
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	defer db.Close()
+
+	migrator, err := migrate.Migrator(ctx, cfg, db)
+
+	if err != nil {
+		return fmt.Errorf("failed to create migrator: %w", err)
+	}
+
+	switch migration {
+	case MigrationUp:
+		err = migrator.MigrateUp(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to migrate: %w", err)
+		}
+		return nil
+	case MigrationDown:
+		err = migrator.MigrateDown(ctx)
+
+		if err != nil {
+			return fmt.Errorf("failed to migrate: %w", err)
+		}
+		return nil
+	}
+	return nil
 }

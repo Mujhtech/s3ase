@@ -3,22 +3,34 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"time"
 )
 
 type DatabaseDriver string
+type PubsubProvider string
 
 const (
 	DatabaseDriverPostgres DatabaseDriver = "postgres"
 	DatabaseDriverSqlite3  DatabaseDriver = "sqlite3"
 
 	DefaultConfigFilePath string = ".env"
+
+	PubsubProviderAwsSqs PubsubProvider = "aws_sqs"
+	PubsubProviderRedis  PubsubProvider = "redis"
+	PubsubProviderGoogle PubsubProvider = "google"
+	PubsubProviderKafka  PubsubProvider = "kafka"
 )
 
 type Config struct {
-	Database Database `json:"database"`
-	Redis    Redis    `json:"redis"`
-	Aws      Aws      `json:"aws"`
-	Server   Server   `json:"server"`
+	EncryptionKey string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
+	Database      Database `json:"database"`
+	Redis         Redis    `json:"redis"`
+	Aws           Aws      `json:"aws"`
+	Server        Server   `json:"server"`
+	Auth          Auth     `json:"auth"`
+	Email         Email    `json:"email"`
+	Job           Job      `json:"job"`
+	Pubsub        Pubsub   `json:"pubsub"`
 }
 
 // Database defines database configuration
@@ -34,7 +46,9 @@ type Database struct {
 
 // Aws defines AWS configuration
 type Aws struct {
-	Region string `envconfig:"AWS_REGION"`
+	DefaultRegion string `envconfig:"AWS_DEFAULT_REGION"`
+	AccessKey     string `json:"access_key" envconfig:"AWS_ACCESS_KEY"`
+	SecretKey     string `json:"secret_key" envconfig:"AWS_SECRET_KEY"`
 }
 
 // Server defines server configuration
@@ -48,10 +62,51 @@ type Server struct {
 
 // Redis defines redis configuration
 type Redis struct {
-	Host     string `json:"host" envconfig:"REDIS_HOST"`
-	Port     int    `json:"port" envconfig:"REDIS_PORT"`
-	Username string `json:"username" envconfig:"REDIS_USERNAME"`
-	Password string `json:"password" envconfig:"REDIS_PASSWORD"`
+	Host               string `json:"host" envconfig:"REDIS_HOST"`
+	Port               int    `json:"port" envconfig:"REDIS_PORT"`
+	Username           string `json:"username" envconfig:"REDIS_USERNAME"`
+	Password           string `json:"password" envconfig:"REDIS_PASSWORD"`
+	MaxRetries         int    `json:"max_retries" envconfig:"REDIS_MAX_RETRIES"`
+	MinIdleConnections int    `json:"min_idle_connections" envconfig:"REDIS_MIN_IDLE_CONNECTIONS"`
+}
+
+type Auth struct {
+	RedirectUrl   string     `json:"redirect_url" envconfig:"AUTH_REDIRECT_URL"`
+	UIRedirectUrl string     `json:"ui_redirect_url" envconfig:"AUTH_UI_REDIRECT_URL"`
+	GoogleAuth    GoogleAuth `json:"google_auth"`
+	GithubAuth    GithubAuth `json:"github_auth"`
+}
+
+type GoogleAuth struct {
+	ClientID     string `json:"auth_google_client_id" envconfig:"AUTH_GOOGLE_CLIENT_ID"`
+	ClientSecret string `json:"auth_google_client_secret" envconfig:"AUTH_GOOGLE_CLIENT_SECRET"`
+}
+
+type GithubAuth struct {
+	ClientID     string `json:"auth_github_client_id" envconfig:"AUTH_GITHUB_CLIENT_ID"`
+	ClientSecret string `json:"auth_github_client_secret" envconfig:"AUTH_GITHUB_CLIENT_SECRET"`
+}
+
+type Email struct {
+	FromAddress string `json:"from_address" envconfig:"EMAIL_FROM_ADDRESS"`
+}
+
+type Job struct {
+	Concurrency int `json:"concurrency" envconfig:"JOB_CONCURRENCY"`
+}
+
+type Pubsub struct {
+	App            string         `json:"app" envconfig:"PUBSUB_APP"`
+	Namespace      string         `json:"namespace" envconfig:"PUBSUB_NAMESPACE"`
+	Provider       PubsubProvider `json:"provider" envconfig:"PUBSUB_PROVIDER"`
+	SendTimeout    time.Duration  `json:"send_timeout" envconfig:"PUBSUB_SEND_TIMEOUT"`
+	ChannelSize    int            `json:"channel_size" envconfig:"PUBSUB_CHANNEL_SIZE"`
+	HealthInterval time.Duration  `json:"health_interval" envconfig:"PUBSUB_HEALTH_INTERVAL"`
+	Google         GooglePubsub   `json:"google"`
+}
+
+type GooglePubsub struct {
+	ProjectID string `json:"project_id" envconfig:"PUBSUB_GOOGLE_PROJECT_ID"`
 }
 
 func (d *Database) BuildDsn() string {
@@ -76,4 +131,18 @@ func (d *Database) BuildDsn() string {
 	}
 
 	return fmt.Sprintf("%s://%s%s:%d%s%s", d.Driver, authPart, d.Host, d.Port, dbPart, optPart)
+}
+
+func (r *Redis) BuildDsn() string {
+	if r.Host == "" {
+		return ""
+	}
+
+	authPart := ""
+	if r.Username != "" || r.Password != "" {
+		authPrefix := url.UserPassword(r.Username, r.Password)
+		authPart = fmt.Sprintf("%s@", authPrefix)
+	}
+
+	return fmt.Sprintf("redis://%s%s:%d", authPart, r.Host, r.Port)
 }
