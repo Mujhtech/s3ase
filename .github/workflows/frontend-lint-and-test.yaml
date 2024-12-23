@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: 20.11.1
           cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       - name: 📥 Download deps
         working-directory: ./frontend
