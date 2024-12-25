@@ -124,8 +124,8 @@ func (f *folderRepo) DeleteFolder(ctx context.Context, id string) error {
 	return nil
 }
 
-// FindFolderByAppID implements FolderRepository.
-func (f *folderRepo) FindFolderByAppID(ctx context.Context, appID string) ([]*models.Folder, error) {
+// FindFoldersByAppID implements FolderRepository.
+func (f *folderRepo) FindFoldersByAppID(ctx context.Context, appID string) ([]*models.Folder, error) {
 	stmt := Builder.
 		Select(folderSelectColumn).
 		From(folderBaseTable).

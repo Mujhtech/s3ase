@@ -41,7 +41,7 @@ type FolderRepository interface {
 	CreateFolder(ctx context.Context, folder *models.Folder) error
 	UpdateFolder(ctx context.Context, folder *models.Folder) error
 	FindFolderByID(ctx context.Context, id string) (*models.Folder, error)
-	FindFolderByAppID(ctx context.Context, appID string) ([]*models.Folder, error)
+	FindFoldersByAppID(ctx context.Context, appID string) ([]*models.Folder, error)
 	DeleteFolder(ctx context.Context, id string) error
 }
 
@@ -49,10 +49,10 @@ type FileRepository interface {
 	CreateFile(ctx context.Context, file *models.File) error
 	UpdateFile(ctx context.Context, file *models.File) error
 	FindFileByID(ctx context.Context, id string) (*models.File, error)
-	FindFileByUserID(ctx context.Context, userID string) ([]*models.File, error)
+	FindFilesByUserID(ctx context.Context, userID string) ([]*models.File, error)
 	FindFilesByAppID(ctx context.Context, appID string) ([]*models.File, error)
 	FindFilesByAppIDWithQuery(ctx context.Context, appID string, query *dto.FileQueryDto) ([]*models.File, error)
-	FindFileByFolderID(ctx context.Context, folderID string) ([]*models.File, error)
+	FindFilesByFolderID(ctx context.Context, folderID string) ([]*models.File, error)
 	DeleteFile(ctx context.Context, id string) error
 }
 
@@ -68,7 +68,7 @@ type WebhookRepository interface {
 	CreateWebhook(ctx context.Context, apiKey *models.Webhook) error
 	UpdateWebhook(ctx context.Context, apiKey *models.Webhook) error
 	FindWebhookByID(ctx context.Context, id string) (*models.Webhook, error)
-	FindWebhookByAppID(ctx context.Context, appId string) ([]*models.Webhook, error)
+	FindWebhooksByAppID(ctx context.Context, appId string) ([]*models.Webhook, error)
 	DeleteWebhook(ctx context.Context, id string) error
 }
 

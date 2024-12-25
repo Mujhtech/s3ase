@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/mujhtech/s3ase/api/dto"
 	"github.com/mujhtech/s3ase/database/models"
 	"go.uber.org/mock/gomock"
 )
@@ -536,18 +537,18 @@ func (mr *MockDomainRepositoryMockRecorder) DeleteDomain(arg0, arg1 any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDomain", reflect.TypeOf((*MockDomainRepository)(nil).DeleteDomain), arg0, arg1)
 }
 
-// FindDomainsByAppID mocks base method
-func (m *MockDomainRepository) FindDomainsByAppID(arg0 context.Context, arg1 string) ([]*models.Domain, error) {
-	ret := m.ctrl.Call(m, "FindDomainsByAppID", arg0, arg1)
-	ret0, _ := ret[0].([]*models.Domain)
+// FindDomainByAppID mocks base method
+func (m *MockDomainRepository) FindDomainByAppID(arg0 context.Context, arg1 string) (*models.Domain, error) {
+	ret := m.ctrl.Call(m, "FindDomainByAppID", arg0, arg1)
+	ret0, _ := ret[0].(*models.Domain)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindDomainsByAppID indicates an expected call of FindDomainsByAppID
-func (mr *MockDomainRepositoryMockRecorder) FindDomainsByAppID(arg0, arg1 any) *gomock.Call {
+// FindDomainByAppID indicates an expected call of FindDomainsByAppID
+func (mr *MockDomainRepositoryMockRecorder) FindDomainByAppID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDomainsByAppID", reflect.TypeOf((*MockDomainRepository)(nil).FindDomainsByAppID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDomainByAppID", reflect.TypeOf((*MockDomainRepository)(nil).FindDomainByAppID), arg0, arg1)
 }
 
 // UpdateDomain mocks base method
@@ -575,4 +576,226 @@ func (m *MockDomainRepository) FindDomainByDomain(arg0 context.Context, arg1 str
 func (mr *MockDomainRepositoryMockRecorder) FindDomainByDomain(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDomainByDomain", reflect.TypeOf((*MockDomainRepository)(nil).FindDomainByDomain), arg0, arg1)
+}
+
+// MockFolderRepository is a mock of FolderRepository interface
+type MockFolderRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockFolderRepositoryMockRecorder
+}
+
+// MockFolderRepositoryMockRecorder is the mock recorder for MockFolderRepository
+type MockFolderRepositoryMockRecorder struct {
+	mock *MockFolderRepository
+}
+
+// NewMockFolderRepository creates a new mock instance
+func NewMockFolderRepository(ctrl *gomock.Controller) *MockFolderRepository {
+	mock := &MockFolderRepository{ctrl: ctrl}
+	mock.recorder = &MockFolderRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockFolderRepository) EXPECT() *MockFolderRepositoryMockRecorder {
+	return m.recorder
+}
+
+// CreateFolder mocks base method
+func (m *MockFolderRepository) CreateFolder(arg0 context.Context, arg1 *models.Folder) error {
+	ret := m.ctrl.Call(m, "CreateFolder", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateFolder indicates an expected call of CreateFolder
+func (mr *MockFolderRepositoryMockRecorder) CreateFolder(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFolder", reflect.TypeOf((*MockFolderRepository)(nil).CreateFolder), arg0, arg1)
+}
+
+// FindFolderByID mocks base method
+func (m *MockFolderRepository) FindFolderByID(arg0 context.Context, arg1 string) (*models.Folder, error) {
+	ret := m.ctrl.Call(m, "FindFolderByID", arg0, arg1)
+	ret0, _ := ret[0].(*models.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFolderByID indicates an expected call of FindFolderByID
+func (mr *MockFolderRepositoryMockRecorder) FindFolderByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFolderByID", reflect.TypeOf((*MockFolderRepository)(nil).FindFolderByID), arg0, arg1)
+}
+
+// UpdateFolder mocks base method
+func (m *MockFolderRepository) UpdateFolder(arg0 context.Context, arg1 *models.Folder) error {
+	ret := m.ctrl.Call(m, "UpdateFolder", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFolder indicates an expected call of UpdateFolder
+func (mr *MockFolderRepositoryMockRecorder) UpdateFolder(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFolder", reflect.TypeOf((*MockFolderRepository)(nil).UpdateFolder), arg0, arg1)
+}
+
+// DeleteFolder mocks base method
+func (m *MockFolderRepository) DeleteFolder(arg0 context.Context, arg1 string) error {
+	ret := m.ctrl.Call(m, "DeleteFolder", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFolder indicates an expected call of DeleteFolder
+func (mr *MockFolderRepositoryMockRecorder) DeleteFolder(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFolder", reflect.TypeOf((*MockFolderRepository)(nil).DeleteFolder), arg0, arg1)
+}
+
+// FindFoldersByAppID mocks base method
+func (m *MockFolderRepository) FindFoldersByAppID(arg0 context.Context, arg1 string) ([]*models.Folder, error) {
+	ret := m.ctrl.Call(m, "FindFoldersByAppID", arg0, arg1)
+	ret0, _ := ret[0].([]*models.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFoldersByAppID indicates an expected call of FindFoldersByAppID
+func (mr *MockFolderRepositoryMockRecorder) FindFoldersByAppID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFoldersByAppID", reflect.TypeOf((*MockFolderRepository)(nil).FindFoldersByAppID), arg0, arg1)
+}
+
+// MockFileRepository is a mock of FileRepository interface
+type MockFileRepository struct {
+	ctrl     *gomock.Controller
+	recorder *MockFileRepositoryMockRecorder
+}
+
+// MockFileRepositoryMockRecorder is the mock recorder for MockFileRepository
+type MockFileRepositoryMockRecorder struct {
+	mock *MockFileRepository
+}
+
+// NewMockFileRepository creates a new mock instance
+func NewMockFileRepository(ctrl *gomock.Controller) *MockFileRepository {
+	mock := &MockFileRepository{ctrl: ctrl}
+	mock.recorder = &MockFileRepositoryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockFileRepository) EXPECT() *MockFileRepositoryMockRecorder {
+	return m.recorder
+}
+
+// CreateFile mocks base method
+func (m *MockFileRepository) CreateFile(arg0 context.Context, arg1 *models.File) error {
+	ret := m.ctrl.Call(m, "CreateFile", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateFile indicates an expected call of CreateFile
+func (mr *MockFileRepositoryMockRecorder) CreateFile(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFile", reflect.TypeOf((*MockFileRepository)(nil).CreateFile), arg0, arg1)
+}
+
+// FindFileByID mocks base method
+func (m *MockFileRepository) FindFileByID(arg0 context.Context, arg1 string) (*models.File, error) {
+	ret := m.ctrl.Call(m, "FindFileByID", arg0, arg1)
+	ret0, _ := ret[0].(*models.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFileByID indicates an expected call of FindFileByID
+func (mr *MockFileRepositoryMockRecorder) FindFileByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFileByID", reflect.TypeOf((*MockFileRepository)(nil).FindFileByID), arg0, arg1)
+}
+
+// UpdateFile mocks base method
+func (m *MockFileRepository) UpdateFile(arg0 context.Context, arg1 *models.File) error {
+	ret := m.ctrl.Call(m, "UpdateFile", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFile indicates an expected call of UpdateFile
+func (mr *MockFileRepositoryMockRecorder) UpdateFile(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFile", reflect.TypeOf((*MockFileRepository)(nil).UpdateFile), arg0, arg1)
+}
+
+// DeleteFile mocks base method
+func (m *MockFileRepository) DeleteFile(arg0 context.Context, arg1 string) error {
+	ret := m.ctrl.Call(m, "DeleteFile", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFile indicates an expected call of DeleteFile
+func (mr *MockFileRepositoryMockRecorder) DeleteFile(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockFileRepository)(nil).DeleteFile), arg0, arg1)
+}
+
+// FindFilesByFolderID mocks base method
+func (m *MockFileRepository) FindFilesByFolderID(arg0 context.Context, arg1 string) ([]*models.File, error) {
+	ret := m.ctrl.Call(m, "FindFilesByFolderID", arg0, arg1)
+	ret0, _ := ret[0].([]*models.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFilesByFolderID indicates an expected call of FindFilesByFolderID
+func (mr *MockFileRepositoryMockRecorder) FindFilesByFolderID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFilesByFolderID", reflect.TypeOf((*MockFileRepository)(nil).FindFilesByFolderID), arg0, arg1)
+}
+
+// FindFilesByUserID  mocks base method
+func (m *MockFileRepository) FindFilesByUserID(arg0 context.Context, arg1 string) ([]*models.File, error) {
+	ret := m.ctrl.Call(m, "FindFilesByUserID", arg0, arg1)
+	ret0, _ := ret[0].([]*models.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFilesByUserID indicates an expected call of FindFilesByUserID
+func (mr *MockFileRepositoryMockRecorder) FindFilesByUserID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFilesByUserID", reflect.TypeOf((*MockFileRepository)(nil).FindFilesByUserID), arg0, arg1)
+}
+
+// FindFilesByAppID mocks base method
+func (m *MockFileRepository) FindFilesByAppID(arg0 context.Context, arg1 string) ([]*models.File, error) {
+	ret := m.ctrl.Call(m, "FindFilesByAppID", arg0, arg1)
+	ret0, _ := ret[0].([]*models.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFilesByAppID indicates an expected call of FindFilesByAppID
+func (mr *MockFileRepositoryMockRecorder) FindFilesByAppID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFilesByAppID", reflect.TypeOf((*MockFileRepository)(nil).FindFilesByAppID), arg0, arg1)
+}
+
+// FindFilesByAppIDWithQuery mocks base method
+func (m *MockFileRepository) FindFilesByAppIDWithQuery(arg0 context.Context, arg1 string, arg2 *dto.FileQueryDto) ([]*models.File, error) {
+	ret := m.ctrl.Call(m, "FindFilesByAppIDWithQuery", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]*models.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindFilesByAppIDWithQuery indicates an expected call of FindFilesByAppIDWithQuery
+func (mr *MockFileRepositoryMockRecorder) FindFilesByAppIDWithQuery(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindFilesByAppIDWithQuery", reflect.TypeOf((*MockFileRepository)(nil).FindFilesByAppIDWithQuery), arg0, arg1, arg2)
 }

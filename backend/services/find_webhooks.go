@@ -15,7 +15,7 @@ type FindWebhooksService struct {
 
 func (c *FindWebhooksService) Run(ctx context.Context) ([]*models.Webhook, error) {
 
-	webhooks, err := c.WebhookRepo.FindWebhookByAppID(ctx, c.App.ID)
+	webhooks, err := c.WebhookRepo.FindWebhooksByAppID(ctx, c.App.ID)
 
 	if err != nil {
 		return nil, err

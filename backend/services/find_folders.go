@@ -16,7 +16,7 @@ type FindFoldersService struct {
 
 func (c *FindFoldersService) Run(ctx context.Context) ([]*models.Folder, error) {
 
-	folders, err := c.FolderRepo.FindFolderByAppID(ctx, c.App.ID)
+	folders, err := c.FolderRepo.FindFoldersByAppID(ctx, c.App.ID)
 
 	if err != nil {
 		return nil, err
