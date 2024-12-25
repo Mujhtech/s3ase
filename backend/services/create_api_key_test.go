@@ -48,11 +48,13 @@ func TestCreateApiKeyService_Run(t *testing.T) {
 				am, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
 				am.EXPECT().
 					FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Times(1).
 					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 
 				apiKey, _ := s.ApiKeyRepo.(*mocks.MockApiKeyRepository)
 				apiKey.EXPECT().
 					CreateApiKey(gomock.Any(), gomock.Any()).
+					Times(1).
 					Return(nil)
 			},
 			wantErr: nil,
