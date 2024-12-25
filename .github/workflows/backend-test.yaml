@@ -1,0 +1,39 @@
+name: backend-test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-test:
+    name: Run backend tests e.g e2e, integration, unit etc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ^1.23
+        id: go
+
+      - name: ⬆️ Get and verify dependencies
+        working-directory: ./backend
+        run: go mod download && go mod verify
+
+      - name: 🏗️ Build backend
+        working-directory: ./backend
+        run: go build -o s3ase ./cmd
+
+      - name: 🔍️ Go vet
+        working-directory: ./backend
+        run: go vet ./...
+
+      - name: 🧪 Run tests
+        working-directory: ./backend
+        run: go test -v ./...

@@ -187,8 +187,8 @@ func (f *fileRepo) FindFilesByAppIDWithQuery(ctx context.Context, appID string, 
 	return files, nil
 }
 
-// FindFileByFolderID implements FileRepository.
-func (f *fileRepo) FindFileByFolderID(ctx context.Context, folderID string) ([]*models.File, error) {
+// FindFilesByFolderID implements FileRepository.
+func (f *fileRepo) FindFilesByFolderID(ctx context.Context, folderID string) ([]*models.File, error) {
 	stmt := Builder.
 		Select(fileSelectColumn).
 		From(fileBaseTable).
@@ -209,8 +209,8 @@ func (f *fileRepo) FindFileByFolderID(ctx context.Context, folderID string) ([]*
 	return files, nil
 }
 
-// FindFileByUserID implements FileRepository.
-func (f *fileRepo) FindFileByUserID(ctx context.Context, userID string) ([]*models.File, error) {
+// FindFilesByUserID implements FileRepository.
+func (f *fileRepo) FindFilesByUserID(ctx context.Context, userID string) ([]*models.File, error) {
 	stmt := Builder.
 		Select(fileSelectColumn).
 		From(fileBaseTable).

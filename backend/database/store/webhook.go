@@ -148,8 +148,8 @@ func (a *webhookRepo) FindWebhookByID(ctx context.Context, id string) (*models.W
 	return webhook, nil
 }
 
-// FindWebhookByAppID implements WebhookRepository.
-func (a *webhookRepo) FindWebhookByAppID(ctx context.Context, appId string) ([]*models.Webhook, error) {
+// FindWebhooksByAppID implements WebhookRepository.
+func (a *webhookRepo) FindWebhooksByAppID(ctx context.Context, appId string) ([]*models.Webhook, error) {
 	stmt := Builder.
 		Select(webhookSelectColumn).
 		From(webhookBaseTable).
