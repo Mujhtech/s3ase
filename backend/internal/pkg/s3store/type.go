@@ -24,7 +24,7 @@ type FileInfo struct {
 
 	Storage map[string]string
 
-	stopUpload func(HTTPResponse)
+	//stopUpload func(HTTPResponse)
 }
 
 type HTTPHeader map[string]string
