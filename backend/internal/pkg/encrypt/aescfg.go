@@ -26,6 +26,10 @@ func NewAesCfb(key string) (Encrypt, error) {
 }
 
 func (e *AesCfb) Encrypt(plainText []byte) (string, error) {
+	const maxSize = 64 * 1024 * 1024 // 64 MB
+	if len(plainText) > maxSize {
+		return "", fmt.Errorf("plainText too large")
+	}
 
 	cipherText := make([]byte, aes.BlockSize+len(plainText))
 	iv := cipherText[:aes.BlockSize]
