@@ -39,6 +39,7 @@ func getCookie(r *http.Request, cookieName string) (string, bool) {
 	return cookie.Value, true
 }
 
+// getHeaderOrDefault returns the first non-empty value of the header with the given name.
 func getHeaderOrDefault(r *http.Request, headerName string, dflt string) string {
 	val, ok := getHeader(r, headerName)
 	if !ok {
@@ -48,6 +49,7 @@ func getHeaderOrDefault(r *http.Request, headerName string, dflt string) string 
 	return val
 }
 
+// getHeader returns the first non-empty value of the header with the given name.
 func getHeader(r *http.Request, headerName string) (string, bool) {
 	for _, val := range r.Header.Values(headerName) {
 		if val != "" {
@@ -67,6 +69,7 @@ func pathParamOrError(r *http.Request, paramName string) (string, error) {
 	return val, nil
 }
 
+// pathParamOrDefault returns the value of the path parameter with the given name or the default value if the parameter is not found.
 func pathParamOrEmpty(r *http.Request, paramName string) string {
 	val, ok := pathParam(r, paramName)
 	if !ok {
