@@ -2,4 +2,21 @@
 
 Simplifying S3 usage through open source.
 
-s3:ListAllMyBuckets
+> [!IMPORTANT]
+> Currently in development.
+
+## Tech stack
+
+### Backend
+
+- Golang
+- Postgresql
+- Redis
+
+### Frontend
+
+- Remix
+- Shadcn UI
+- Tailwind CSS
+
+## Features
