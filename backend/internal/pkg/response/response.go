@@ -92,6 +92,10 @@ func Unauthorized(w http.ResponseWriter, r *http.Request, err error) error {
 }
 
 func Redirect(w http.ResponseWriter, r *http.Request, url string, status int) error {
+	parsedUrl, err := http.ParseRequestURI(url)
+	if err != nil || parsedUrl.Host != "" {
+		return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
+	}
 	http.Redirect(w, r, url, status)
 	return nil
 }
