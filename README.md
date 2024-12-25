@@ -38,6 +38,7 @@ To get started, you can run this project locally using 2 options
 - [Docker](#docker) : Using docker-compose
 
 ```bash
+# dev
 docker-compose up -d ./docker-compose.dev.yml
 ```
 
@@ -48,22 +49,21 @@ docker-compose up -d ./docker-compose.dev.yml
   - [Node](https://nodejs.org/en/download)
 
 ```bash
-// backend
+# backend
 cd backend
 
 go build -o s3ase ./cmd
 
-/// migrate the database
+# migrate the database
 ./s3ase migrate up
 
-/// seed the database
+# seed the database
 ./s3ase migrate seed
 
-/// run the server
+# run the server
 ./s3ase server
 
-
-// frontend
+# frontend
 cd frontend && pnpm install && pnpm run dev
 ```
 
@@ -75,4 +75,4 @@ This project is licensed under the [GNU AFFERO GENERAL PUBLIC LICENSE](https://g
 
 ## Activities
 
-![Alt](https://repobeats.axiom.co/api/embed/2715c72646a8bcd65826fa8e45833d55404a847e.svg "Repobeats analytics image")
+![Activities](https://repobeats.axiom.co/api/embed/2715c72646a8bcd65826fa8e45833d55404a847e.svg "Repobeats analytics image")
