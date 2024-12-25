@@ -23,6 +23,7 @@ services:
 
   db-migration:
     container_name: s3ase-db-migration
+    image: mujhtech/s3ase-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
