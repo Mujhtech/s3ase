@@ -33,7 +33,7 @@ func (m *MockAppRepository) EXPECT() *MockAppRepositoryMockRecorder {
 
 // CreateApp mocks base method
 func (m *MockAppRepository) CreateApp(arg0 context.Context, arg1 *models.App) error {
-	ret := m.ctrl.Call(m, "Create", arg0, arg1)
+	ret := m.ctrl.Call(m, "CreateApp", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }

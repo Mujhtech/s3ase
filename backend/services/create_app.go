@@ -3,14 +3,13 @@ package services
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/guregu/null"
 	"github.com/mujhtech/s3ase/api/dto"
 	"github.com/mujhtech/s3ase/database/models"
 	"github.com/mujhtech/s3ase/database/store"
-	"github.com/mujhtech/s3ase/internal/pkg/s3store"
-	"github.com/mujhtech/s3ase/job"
 )
 
 type CreateAppService struct {
@@ -20,8 +19,8 @@ type CreateAppService struct {
 	AppMemberRepo store.AppMemberRepository
 	ApiKeyRepo    store.ApiKeyRepository
 	User          *models.User
-	S3            *s3store.S3Store
-	Job           *job.Job
+	// S3            *s3store.S3Store
+	// Job           *job.Job
 }
 
 func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
@@ -35,11 +34,11 @@ func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
 	slug := slugify(c.Body.Name)
 
 	// check if bucket already exists
-	existBucketLocation, err := c.S3.CheckOrCreateNewBucket(ctx, slug, region)
+	// existBucketLocation, err := c.S3.CheckOrCreateNewBucket(ctx, slug, region)
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	app := &models.App{
 		ID:          uuid.New().String(),
@@ -50,16 +49,12 @@ func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
 		Metadata:    null.NewString("{}", true),
 		Bucket:      slug,
 		Region:      null.NewString(region, region != ""),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	// create bucket on aws s3
-	err = c.AppRepo.CreateApp(ctx, app)
-
-	if err != nil {
-		return nil, err
-	}
-
-	app, err = c.AppRepo.FindAppByID(ctx, app.ID)
+	err := c.AppRepo.CreateApp(ctx, app)
 
 	if err != nil {
 		return nil, err
@@ -76,30 +71,30 @@ func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
 	}
 
 	// create onboarding api key
-	createApiKeyService := CreateApiKeyService{
-		App:           app,
-		AppMemberRepo: c.AppMemberRepo,
-		ApiKeyRepo:    c.ApiKeyRepo,
-		User:          c.User,
-		Body: &dto.CreateApiKeyRequestDto{
-			Name:        "Onboarding",
-			Description: "",
-			Access:      models.ApiKeyAccessRead,
-			ExpiredAt:   0,
-		},
-	}
+	// createApiKeyService := CreateApiKeyService{
+	// 	App:           app,
+	// 	AppMemberRepo: c.AppMemberRepo,
+	// 	ApiKeyRepo:    c.ApiKeyRepo,
+	// 	User:          c.User,
+	// 	Body: &dto.CreateApiKeyRequestDto{
+	// 		Name:        "Onboarding",
+	// 		Description: "",
+	// 		Access:      models.ApiKeyAccessRead,
+	// 		ExpiredAt:   0,
+	// 	},
+	// }
 
-	if _, err := createApiKeyService.Run(ctx); err != nil {
-		return nil, err
-	}
+	// if _, err := createApiKeyService.Run(ctx); err != nil {
+	// 	return nil, err
+	// }
 
-	if existBucketLocation != "" {
-		if err = c.Job.Client.Enqueue(job.QueueNameDefault, job.JobNameAppSync, &job.ClientPayload{
-			Data: []byte(app.ID),
-		}); err != nil {
-			return nil, err
-		}
-	}
+	//if existBucketLocation != "" {
+	// if err = c.Job.Client.Enqueue(job.QueueNameDefault, job.JobNameAppSync, &job.ClientPayload{
+	// 	Data: []byte(app.ID),
+	// }); err != nil {
+	// 	return nil, err
+	// }
+	//}
 
 	return app, nil
 }

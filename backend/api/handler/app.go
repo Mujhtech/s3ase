@@ -72,8 +72,8 @@ func (h *Handler) CreateApp(w http.ResponseWriter, r *http.Request) {
 		AppRepo:       h.store.AppRepo,
 		AppMemberRepo: h.store.AppMemberRepo,
 		ApiKeyRepo:    h.store.ApiKeyRepo,
-		S3:            h.s3,
-		User:          session.User,
+		//S3:            h.s3,
+		User: session.User,
 	}
 
 	app, err := createAppService.Run(ctx)

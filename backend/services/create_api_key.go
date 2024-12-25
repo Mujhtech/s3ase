@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/guregu/null"
@@ -33,7 +34,7 @@ func (c *CreateApiKeyService) Run(ctx context.Context) (*models.ApiKey, error) {
 
 	id := uuid.New().String()
 
-	if err := c.ApiKeyRepo.CreateApiKey(ctx, &models.ApiKey{
+	apiKey := &models.ApiKey{
 		ID:          id,
 		AppID:       c.App.ID,
 		Name:        c.Body.Name,
@@ -42,9 +43,13 @@ func (c *CreateApiKeyService) Run(ctx context.Context) (*models.ApiKey, error) {
 		ExpiredAt:   null.NewInt(c.Body.ExpiredAt, c.Body.ExpiredAt != 0),
 		CreatedBy:   c.User.ID,
 		Metadata:    map[string]interface{}{},
-	}); err != nil {
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	if err := c.ApiKeyRepo.CreateApiKey(ctx, apiKey); err != nil {
 		return nil, err
 	}
 
-	return c.ApiKeyRepo.FindApiKeyByID(ctx, id)
+	return apiKey, nil
 }

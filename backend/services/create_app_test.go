@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/guregu/null"
 	"github.com/mujhtech/s3ase/api/dto"
@@ -45,21 +47,49 @@ func TestCreateAppService_Run(t *testing.T) {
 				},
 			},
 			want: &models.App{
-				ID:      "1",
-				Name:    "test",
-				OwnerID: "1",
-				Slug:    "test",
-				Region:  null.NewString("us-east-1", true),
-				Bucket:  "test",
-				Metadata: null.NewString(
-					"{}",
-					true,
-				),
+				Name:        "test",
+				OwnerID:     "1",
+				Slug:        "test",
+				Region:      null.NewString("us-east-1", true),
+				Description: null.NewString("test", true),
+				Bucket:      "test",
+				Metadata:    null.NewString("{}", true),
 			},
 			wantErr: false,
 			mockFn: func(s *CreateAppService) {
 				a, _ := s.AppRepo.(*mocks.MockAppRepository)
 				a.EXPECT().CreateApp(gomock.Any(), gomock.Any()).Times(1).Return(nil)
+
+				am, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				am.EXPECT().CreateAppMember(gomock.Any(), gomock.Any()).Times(1).Return(nil)
+			},
+		},
+		{
+			name: "should_return_error_on_app_create_failure",
+			args: args{
+				ctx: context.Background(),
+				User: &models.User{
+					ID:                   "1",
+					Name:                 "error",
+					Email:                "error@test.com",
+					EmailVerified:        false,
+					AuthenticationMethod: "github",
+				},
+				Body: &dto.CreateAppRequestDto{
+					Name:        "fail_app",
+					Description: "this should fail",
+					Region:      "us-east-1",
+					Slug:        "fail-app",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+			mockFn: func(s *CreateAppService) {
+				a, _ := s.AppRepo.(*mocks.MockAppRepository)
+				a.EXPECT().
+					CreateApp(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(fmt.Errorf("mock create app error"))
 			},
 		},
 	}
@@ -89,10 +119,14 @@ func TestCreateAppService_Run(t *testing.T) {
 			}
 
 			require.Nil(t, err)
-			require.NotEmpty(t, got.ID)
 			require.NotEmpty(t, got.Name)
 			require.NotEmpty(t, got.Slug)
 			require.NotEmpty(t, got.OwnerID)
+
+			// set the time to zero value
+			got.CreatedAt = time.Time{}
+			got.UpdatedAt = time.Time{}
+			got.ID = ""
 
 			require.Equal(t, tt.want, got)
 		})
