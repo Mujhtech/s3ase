@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-chi/render"
@@ -91,12 +92,12 @@ func Unauthorized(w http.ResponseWriter, r *http.Request, err error) error {
 	return nil
 }
 
-func Redirect(w http.ResponseWriter, r *http.Request, url string, status int) error {
-	parsedUrl, err := http.ParseRequestURI(url)
+func Redirect(w http.ResponseWriter, r *http.Request, u string, status int) error {
+	parsedUrl, err := url.ParseRequestURI(u)
 	if err != nil || parsedUrl.Host != "" {
 		return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
 	}
-	http.Redirect(w, r, url, status)
+	http.Redirect(w, r, u, status)
 	return nil
 }
 
