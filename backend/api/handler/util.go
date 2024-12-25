@@ -40,26 +40,27 @@ func getCookie(r *http.Request, cookieName string) (string, bool) {
 }
 
 // getHeaderOrDefault returns the first non-empty value of the header with the given name.
-func getHeaderOrDefault(r *http.Request, headerName string, dflt string) string {
-	val, ok := getHeader(r, headerName)
-	if !ok {
-		return dflt
-	}
+// func getHeaderOrDefault(r *http.Request, headerName string, dflt string) string {
+// 	val, ok := getHeader(r, headerName)
+// 	if !ok {
+// 		return dflt
+// 	}
 
-	return val
-}
+// 	return val
+// }
 
 // getHeader returns the first non-empty value of the header with the given name.
-func getHeader(r *http.Request, headerName string) (string, bool) {
-	for _, val := range r.Header.Values(headerName) {
-		if val != "" {
-			return val, true
-		}
-	}
+// func getHeader(r *http.Request, headerName string) (string, bool) {
+// 	for _, val := range r.Header.Values(headerName) {
+// 		if val != "" {
+// 			return val, true
+// 		}
+// 	}
 
-	return "", false
-}
+// 	return "", false
+// }
 
+// pathParamOrError returns the value of the path parameter with the given name or an error if the parameter is not found.
 func pathParamOrError(r *http.Request, paramName string) (string, error) {
 	val, ok := pathParam(r, paramName)
 	if !ok {
@@ -70,15 +71,16 @@ func pathParamOrError(r *http.Request, paramName string) (string, error) {
 }
 
 // pathParamOrDefault returns the value of the path parameter with the given name or the default value if the parameter is not found.
-func pathParamOrEmpty(r *http.Request, paramName string) string {
-	val, ok := pathParam(r, paramName)
-	if !ok {
-		return ""
-	}
+// func pathParamOrEmpty(r *http.Request, paramName string) string {
+// 	val, ok := pathParam(r, paramName)
+// 	if !ok {
+// 		return ""
+// 	}
 
-	return val
-}
+// 	return val
+// }
 
+// pathParam returns the value of the path parameter with the given name.
 func pathParam(r *http.Request, paramName string) (string, bool) {
 	val := chi.URLParam(r, paramName)
 	if val == "" {
@@ -88,6 +90,7 @@ func pathParam(r *http.Request, paramName string) (string, bool) {
 	return val, true
 }
 
+// queryParam returns the value of the query parameter with the given name.
 func queryParam(r *http.Request, paramName string) (string, bool) {
 	query := r.URL.Query()
 	if !query.Has(paramName) {
@@ -97,6 +100,7 @@ func queryParam(r *http.Request, paramName string) (string, bool) {
 	return query.Get(paramName), true
 }
 
+// queryParamOrError returns the value of the query parameter with the given name or an error if the parameter is not found.
 func queryParamOrError(r *http.Request, paramName string) (string, error) {
 	val, ok := queryParam(r, paramName)
 	if !ok {
@@ -106,6 +110,7 @@ func queryParamOrError(r *http.Request, paramName string) (string, error) {
 	return val, nil
 }
 
+// queryParamOrDefault returns the value of the query parameter with the given name or the default value if the parameter is not found.
 func queryParamOrDefault(r *http.Request, paramName string, deflt string) string {
 	val, ok := queryParam(r, paramName)
 	if !ok {
@@ -115,15 +120,17 @@ func queryParamOrDefault(r *http.Request, paramName string, deflt string) string
 	return val
 }
 
-func queryParamList(r *http.Request, paramName string) ([]string, bool) {
-	query := r.URL.Query()
-	if !query.Has(paramName) {
-		return nil, false
-	}
+// queryParamList returns the list of values of the query parameter with the given name.
+// func queryParamList(r *http.Request, paramName string) ([]string, bool) {
+// 	query := r.URL.Query()
+// 	if !query.Has(paramName) {
+// 		return nil, false
+// 	}
 
-	return query[paramName], true
-}
+// 	return query[paramName], true
+// }
 
+// ParsePage returns the page number.
 func ParsePage(r *http.Request) int {
 	s := r.URL.Query().Get(QueryParamPage)
 	i, _ := strconv.Atoi(s)
@@ -133,6 +140,7 @@ func ParsePage(r *http.Request) int {
 	return i
 }
 
+// ParsePerPage returns the number of items per page.
 func ParsePerPage(r *http.Request) int {
 	s := r.URL.Query().Get(QueryParamPerPage)
 	i, _ := strconv.Atoi(s)
@@ -144,6 +152,7 @@ func ParsePerPage(r *http.Request) int {
 	return i
 }
 
+// createCookie creates a cookie with the given options.
 func createCookie(w http.ResponseWriter, opts CookieOptions) {
 	cookie := &http.Cookie{
 		Name:     opts.Name,
