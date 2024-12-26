@@ -113,6 +113,7 @@ type GooglePubsub struct {
 type Protocol struct {
 	MaxSize                int64         `json:"max_size" envconfig:"PROTOCOL_MAX_SIZE"`
 	UploadProgressInterval time.Duration `json:"upload_progress_interval" envconfig:"PROTOCOL_UPLOAD_PROGRESS_INTERVAL"`
+	NetworkTimeout         time.Duration `json:"network_timeout" envconfig:"PROTOCOL_NETWORK_TIMEOUT"`
 }
 
 func (d *Database) BuildDsn() string {
