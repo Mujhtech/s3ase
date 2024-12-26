@@ -31,6 +31,7 @@ type Config struct {
 	Email         Email    `json:"email"`
 	Job           Job      `json:"job"`
 	Pubsub        Pubsub   `json:"pubsub"`
+	Protocol      Protocol `json:"protocol"`
 }
 
 // Database defines database configuration
@@ -107,6 +108,11 @@ type Pubsub struct {
 
 type GooglePubsub struct {
 	ProjectID string `json:"project_id" envconfig:"PUBSUB_GOOGLE_PROJECT_ID"`
+}
+
+type Protocol struct {
+	MaxSize                int64         `json:"max_size" envconfig:"PROTOCOL_MAX_SIZE"`
+	UploadProgressInterval time.Duration `json:"upload_progress_interval" envconfig:"PROTOCOL_UPLOAD_PROGRESS_INTERVAL"`
 }
 
 func (d *Database) BuildDsn() string {

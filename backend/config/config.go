@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -57,5 +59,26 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	if err = config.validate(); err != nil {
+		return nil, err
+	}
+
 	return config, nil
+}
+
+func (c *Config) validate() error {
+	// Validate database configuration
+	if c.Database.Host == "" {
+		return fmt.Errorf("database host cannot be empty")
+	}
+	if c.Database.Port == 0 {
+		return fmt.Errorf("database port cannot be zero")
+	}
+
+	dbDsn := c.Database.BuildDsn()
+	if dbDsn == "" {
+		return fmt.Errorf("database dsn is empty")
+	}
+
+	return nil
 }
