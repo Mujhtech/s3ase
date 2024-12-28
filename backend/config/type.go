@@ -32,6 +32,17 @@ type Config struct {
 	Job           Job      `json:"job"`
 	Pubsub        Pubsub   `json:"pubsub"`
 	Protocol      Protocol `json:"protocol"`
+	Cors          Cors     `json:"cors"`
+}
+
+// Cors defines CORS configuration
+type Cors struct {
+	AllowedOrigins   []string `json:"allowed_origins" envconfig:"CORS_ALLOWED_ORIGINS"`
+	AllowedMethods   []string `json:"allowed_methods" envconfig:"CORS_ALLOWED_METHODS"`
+	AllowedHeaders   []string `json:"allowed_headers" envconfig:"CORS_ALLOWED_HEADERS"`
+	ExposedHeaders   []string `json:"exposed_headers" envconfig:"CORS_EXPOSED_HEADERS"`
+	AllowCredentials bool     `json:"allow_credentials" envconfig:"CORS_ALLOW_CREDENTIALS"`
+	MaxAge           int      `json:"max_age" envconfig:"CORS_MAX_AGE"`
 }
 
 // Database defines database configuration
@@ -69,6 +80,7 @@ type Redis struct {
 	Password           string `json:"password" envconfig:"REDIS_PASSWORD"`
 	MaxRetries         int    `json:"max_retries" envconfig:"REDIS_MAX_RETRIES"`
 	MinIdleConnections int    `json:"min_idle_connections" envconfig:"REDIS_MIN_IDLE_CONNECTIONS"`
+	DB                 int    `json:"db" envconfig:"REDIS_DB"`
 }
 
 type Auth struct {

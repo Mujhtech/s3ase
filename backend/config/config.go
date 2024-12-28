@@ -7,6 +7,14 @@ import (
 )
 
 var DefaultConfig = &Config{
+	Cors: Cors{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Accept", "Authorization", "Accept-Encoding", "Content-Length", "Content-Type", "X-CSRF-Token", "X-Requested-With", "X-Requested-Id", "x-app-id"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	},
 	Database: Database{
 		Driver:   DatabaseDriverPostgres,
 		Host:     "localhost",
@@ -23,6 +31,7 @@ var DefaultConfig = &Config{
 		Password:           "",
 		MinIdleConnections: 0,
 		MaxRetries:         3,
+		DB:                 1,
 	},
 	Aws: Aws{
 		DefaultRegion: "eu-west-1",
@@ -42,11 +51,12 @@ var DefaultConfig = &Config{
 		Concurrency: 10,
 	},
 	Pubsub: Pubsub{
+		Provider:       PubsubProviderRedis,
 		App:            "s3ase",
 		Namespace:      "s3ase",
 		HealthInterval: 2,
 		SendTimeout:    60,
-		ChannelSize:    100,
+		ChannelSize:    500,
 	},
 }
 
