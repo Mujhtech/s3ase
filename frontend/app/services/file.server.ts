@@ -28,12 +28,31 @@ export async function getFile(request: Request, id: string) {
   return res.data;
 }
 
-export async function createFile(request: Request, body: CreateFileForm) {
+export async function uploadFile(
+  request: Request,
+  // file: File,
+  body?: CreateFileForm
+) {
+  // const formData = new FormData();
+  // formData.append("file", file);
+
+  // // Append other form data
+  // if (body) {
+  //   Object.entries(body).forEach(([key, value]) => {
+  //     if (value !== undefined) {
+  //       formData.append(key, value.toString());
+  //     }
+  //   });
+  // }
+
   const res = await api.post({
     request,
     path: "/ui/files",
     body: body,
     schema: GetFileSchema,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 
   return res.data;
