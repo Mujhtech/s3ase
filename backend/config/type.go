@@ -8,6 +8,7 @@ import (
 
 type DatabaseDriver string
 type PubsubProvider string
+type CacheProvider string
 
 const (
 	DatabaseDriverPostgres DatabaseDriver = "postgres"
@@ -19,6 +20,9 @@ const (
 	PubsubProviderRedis  PubsubProvider = "redis"
 	PubsubProviderGoogle PubsubProvider = "google"
 	PubsubProviderKafka  PubsubProvider = "kafka"
+
+	CacheProviderRedis    CacheProvider = "redis"
+	CacheProviderInMemory CacheProvider = "inmemory"
 )
 
 type Config struct {
@@ -33,6 +37,11 @@ type Config struct {
 	Pubsub        Pubsub   `json:"pubsub"`
 	Protocol      Protocol `json:"protocol"`
 	Cors          Cors     `json:"cors"`
+	Cache         Cache    `json:"cache"`
+}
+
+type Cache struct {
+	Provider CacheProvider `json:"provider" envconfig:"CACHE_PROVIDER"`
 }
 
 // Cors defines CORS configuration
