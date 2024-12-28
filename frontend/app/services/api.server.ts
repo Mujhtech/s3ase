@@ -9,6 +9,7 @@ type ClientRequestOptions<T> = {
   body?: any;
   query?: any;
   schema?: z.ZodType<T>;
+  headers?: any;
 };
 
 async function postRequest<T = any>(
@@ -21,6 +22,7 @@ async function postRequest<T = any>(
         path: options.path,
         body: options.body,
         request: options.request,
+        headers: options.headers,
       });
     },
     {
@@ -40,6 +42,7 @@ async function getRequest<T = any>(
 
       return clientRequest({
         request: options.request,
+        headers: options.headers,
         method: "GET",
         path: path,
         body: {},
@@ -58,6 +61,7 @@ async function putRequest<T = any>(
     () => {
       return clientRequest({
         request: options.request,
+        headers: options.headers,
         method: "PUT",
         path: options.path,
         body: options.body,
@@ -77,6 +81,7 @@ async function deleteRequest<T = any>(
       return clientRequest({
         method: "DELETE",
         path: options.path,
+        headers: options.headers,
         body: options.body,
         request: options.request,
       });

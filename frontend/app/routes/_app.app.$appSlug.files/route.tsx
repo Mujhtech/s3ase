@@ -22,7 +22,7 @@ import {
 import { useApp } from "~/hooks/use-apps";
 import { CreateFolderFormSchema } from "~/models/folder";
 import FolderCard from "~/components/file/folder-card";
-import { getFiles } from "~/services/file.server";
+import { getFiles, uploadFile } from "~/services/file.server";
 import CreateFolderDialog from "~/components/file/create-folder-dialog";
 import FileCard from "~/components/file/file-card";
 import DragAndDropArea from "~/components/file/drag-and-drop-area";

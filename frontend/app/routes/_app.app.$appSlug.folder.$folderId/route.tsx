@@ -1,7 +1,7 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import React, { useState } from "react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { getFiles } from "~/services/file.server";
+import { getFiles, uploadFile } from "~/services/file.server";
 import { getFolder } from "~/services/folder.server";
 import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 import { z } from "zod";
@@ -49,7 +49,7 @@ export default function Page() {
           <FileLayout layout={layout} setLayout={setLayout} />
         </div>
       </div>
-      <DragAndDropArea>
+      <DragAndDropArea folderId={folder.id}>
         <div className="relative min-h-[80vh] h-full ">
           <FilesPageContext>
             <div className="m-3 h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-black/60">

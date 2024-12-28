@@ -38,6 +38,7 @@ export const GetFilesSchema = ServerResponseSchema.extend({
 export const CreateFileFormSchema = MediaUploadSchema.extend({
   name: z.string().min(3),
   description: z.string().optional(),
+  folder_id: z.string().optional(),
   intent: z.enum(["create", "update", "delete"]).default("create"),
   id: z.string().optional(),
 });

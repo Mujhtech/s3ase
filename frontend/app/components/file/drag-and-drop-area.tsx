@@ -2,17 +2,39 @@ import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone-esm";
 import { CloudUpload } from "lucide-react";
+import { useFetcher } from "@remix-run/react";
+import { useApp } from "~/hooks/use-apps";
 
 export default function DragAndDropArea({
   children,
+  folderId,
 }: {
   children: React.ReactNode;
+  folderId?: string;
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
+  const fetcher = useFetcher();
+  const { slug } = useApp();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const formData = new FormData();
+      formData.append("file", acceptedFiles[0]);
+      formData.append("intent", "create");
+      formData.append("type", "file");
+      formData.append("name", acceptedFiles[0].name);
+
+      if (folderId) {
+        formData.append("folder_id", folderId);
+      }
+
+      fetcher.submit(formData, {
+        method: "POST",
+        action: `/resources/${slug}/files`,
+      });
+    }
     // setIsUploading(true);
     // // Simulate upload progress
     // let progress = 0;

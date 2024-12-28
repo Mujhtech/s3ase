@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "@remix-run/react";
 import { parseWithZod } from "@conform-to/zod";
 import { ActionFunction, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { appPath, appsPath, filesPath } from "~/lib/path";
 import {
   commitSession,
@@ -15,6 +15,12 @@ import SideMenu from "~/components/layout/side-menu";
 import { getApps } from "~/services/app.server";
 import invariant from "tiny-invariant";
 import { cn } from "~/lib/utils";
+import { useSSE } from "~/hooks/use-sse";
+import { env } from "~/env.server";
+import { getAuthTokenFromSession } from "~/services/auth.server";
+import FilesUploadState, {
+  FileUploadProgress,
+} from "~/components/file/files-upload-state";
 
 export const AppSlugParamSchema = z.object({
   appSlug: z.string(),
@@ -26,6 +32,7 @@ const SwitchAppSchema = z.object({
 
 export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
+
   const submission = parseWithZod(formData, { schema: SwitchAppSchema });
 
   if (submission.status !== "success") {
@@ -56,6 +63,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   //   return redirect(appsPath());
   // }
 
+  const backendUrl = env.BACKEND_URL;
+
+  const accessToken = await getAuthTokenFromSession(request);
+
   const user = await requireUser(request);
 
   const { appSlug } = AppSlugParamSchema.parse(params);
@@ -65,15 +76,56 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return typedjson({
     user,
     appSlug,
+    backendUrl,
     apps,
+    accessToken,
     app: apps.find((app) => app.slug === appSlug),
   });
 };
 
 export default function App() {
   const data = useTypedLoaderData<typeof loader>();
+  const [open, setOpen] = React.useState(false);
+  const [files, setFiles] = React.useState<Array<FileUploadProgress>>([]);
+  const DEFAULT_EVENTS = [
+    "upload_started",
+    "upload_progress",
+    "upload_completed",
+  ];
 
   const location = useLocation();
+
+  useSSE({
+    baseUrl: data.backendUrl,
+    shouldRun: true,
+    appId: data.app?.id,
+    accessToken: data.accessToken,
+    path: "/api/ui/sse",
+    events: useMemo(() => DEFAULT_EVENTS, []),
+    onEvent: useCallback(
+      (type: string, data: any) => {
+        // check if file already exists using id, if exist update data else add new file
+
+        if (data && DEFAULT_EVENTS.includes(type)) {
+          setFiles((prev) => {
+            const file = prev.find((file) => file.id === data.id);
+            if (file) {
+              return prev.map((file) =>
+                file.id === data.id ? { ...file, ...data } : file
+              );
+            } else {
+              return [...prev, data];
+            }
+          });
+
+          if (open == false) {
+            setOpen(true);
+          }
+        }
+      },
+      [open, files]
+    ),
+  });
 
   return (
     <div className="h-full w-full grid grid-rows-1 overflow-hidden">
@@ -82,12 +134,14 @@ export default function App() {
         <div className="grid grid-rows-1 overflow-hidden">
           <div
             className={cn(
-              "w-full",
+              "w-full relative",
               location.pathname != filesPath(data.appSlug) &&
                 "p-3 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-black/60"
             )}
           >
             <Outlet />
+
+            <FilesUploadState files={files} open={open} setOpen={setOpen} />
           </div>
         </div>
       </div>
