@@ -7,6 +7,9 @@ import (
 )
 
 var DefaultConfig = &Config{
+	Cache: Cache{
+		Provider: CacheProviderRedis,
+	},
 	Cors: Cors{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
