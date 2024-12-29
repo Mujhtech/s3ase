@@ -92,11 +92,14 @@ func Unauthorized(w http.ResponseWriter, r *http.Request, err error) error {
 	return nil
 }
 
-func Redirect(w http.ResponseWriter, r *http.Request, u string, status int) error {
-	parsedUrl, err := url.ParseRequestURI(u)
-	if err != nil || parsedUrl.Host != "" {
-		return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
+func Redirect(w http.ResponseWriter, r *http.Request, u string, status int, ignoreUrl bool) error {
+	if !ignoreUrl {
+		parsedUrl, err := url.ParseRequestURI(u)
+		if err != nil || parsedUrl.Host != "" {
+			return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
+		}
 	}
+
 	http.Redirect(w, r, u, status)
 	return nil
 }

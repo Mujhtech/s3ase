@@ -51,7 +51,7 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		query := url.Values{}
 		query.Add("error", err.Error())
 
-		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect); err != nil {
+		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect, true); err != nil {
 			log.Error().Err(err).Msg("failed to redirect")
 			return
 		}
@@ -68,7 +68,7 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	if err = response.Redirect(w, r, authUrl, http.StatusTemporaryRedirect); err != nil {
+	if err = response.Redirect(w, r, authUrl, http.StatusTemporaryRedirect, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}
@@ -172,7 +172,7 @@ func (h *Handler) AuthenticateCallback(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	if err = response.Redirect(w, r, redirectTo.String(), http.StatusTemporaryRedirect); err != nil {
+	if err = response.Redirect(w, r, redirectTo.String(), http.StatusTemporaryRedirect, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}
@@ -199,7 +199,7 @@ func (h *Handler) AuthenticateCallbackPost(w http.ResponseWriter, r *http.Reques
 
 		query.Add("error", err.Error())
 
-		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect); err != nil {
+		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect, true); err != nil {
 			log.Error().Err(err).Msg("failed to redirect")
 			return
 		}
@@ -210,7 +210,7 @@ func (h *Handler) AuthenticateCallbackPost(w http.ResponseWriter, r *http.Reques
 	query.Add("state", authState)
 	query.Add("code", code)
 
-	if err = response.Redirect(w, r, fmt.Sprintf("/%s/callback?%s", provider.Name(), query.Encode()), http.StatusSeeOther); err != nil {
+	if err = response.Redirect(w, r, fmt.Sprintf("/%s/callback?%s", provider.Name(), query.Encode()), http.StatusSeeOther, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}
