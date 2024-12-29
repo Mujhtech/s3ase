@@ -11,6 +11,7 @@ import (
 	gojwt "github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/gotidy/ptr"
+	"github.com/mujhtech/s3ase/cache"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/models"
 	"github.com/mujhtech/s3ase/database/store"
@@ -27,6 +28,7 @@ type JWTAuth struct {
 	cfg       *config.Config
 	userRepo  store.UserRepository
 	tokenRepo store.TokenRepository
+	cache     cache.Cache
 }
 
 type Claims struct {
@@ -42,11 +44,12 @@ type SubClaimsToken struct {
 	ID   string         `json:"id,omitempty"`
 }
 
-func NewJWTAuth(cfg *config.Config, userRepo store.UserRepository, tokenRepo store.TokenRepository) Auth {
+func NewJWTAuth(cfg *config.Config, userRepo store.UserRepository, tokenRepo store.TokenRepository, cache cache.Cache) Auth {
 	return &JWTAuth{
 		cfg:       cfg,
 		userRepo:  userRepo,
 		tokenRepo: tokenRepo,
+		cache:     cache,
 	}
 }
 
@@ -136,6 +139,11 @@ func (j JWTAuth) CreateToken(
 	jwtToken, err := generateToken(&token, j.cfg.EncryptionKey)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create jwt token: %w", err)
+	}
+
+	// set token in cache.
+	if err := j.cache.Set(ctx, token.Value, token.ID, *lifetime); err != nil {
+		return nil, "", fmt.Errorf("failed to set token in cache: %w", err)
 	}
 
 	return &token, jwtToken, nil

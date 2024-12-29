@@ -12,4 +12,4 @@ CREATE TYPE domain_status AS ENUM ('pending', 'review', 'verified', 'failed');
 
 CREATE TYPE domain_verification_type AS ENUM ('dns', 'cname');
 
-CREATE TYPE file_status AS ENUM ('started', "pending", 'uploading', 'completed', 'cancelled', 'failed');
+CREATE TYPE file_status AS ENUM ('started', 'pending', 'uploading', 'completed', 'cancelled', 'failed');

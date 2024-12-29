@@ -141,7 +141,7 @@ func (h *Handler) AuthenticateCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create token
-	tokenManager := jwtAuth.NewJWTAuth(h.cfg, h.store.UserRepo, h.store.TokenRepo)
+	tokenManager := jwtAuth.NewJWTAuth(h.cfg, h.store.UserRepo, h.store.TokenRepo, h.cache)
 
 	_, authToken, err := tokenManager.CreateToken(ctx, user.ID, "bearer")
 

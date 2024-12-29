@@ -10,10 +10,12 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/mujhtech/s3ase/api/handler"
 	"github.com/mujhtech/s3ase/api/middleware"
+	"github.com/mujhtech/s3ase/cache"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/store"
 	"github.com/mujhtech/s3ase/internal/pkg/s3store"
 	"github.com/mujhtech/s3ase/internal/pkg/sse"
+	"github.com/mujhtech/s3ase/internal/protocol"
 	"github.com/mujhtech/s3ase/job"
 	"github.com/rs/zerolog/hlog"
 )
@@ -23,18 +25,21 @@ type Api struct {
 	cfg     *config.Config
 	store   *store.Store
 	job     *job.Job
+	cache   cache.Cache
 }
 
 func New(
 	cfg *config.Config,
 	ctx context.Context,
+	cache cache.Cache,
 	job *job.Job,
 	store *store.Store,
 	s3 *s3store.S3Store,
 	sse sse.Streamer,
+	protocol *protocol.Protocol,
 ) (*Api, error) {
 
-	h, err := handler.New(cfg, ctx, job, store, s3, sse)
+	h, err := handler.New(cfg, ctx, cache, job, store, s3, sse, protocol)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create handler: %w", err)
 	}
@@ -44,6 +49,7 @@ func New(
 		cfg:     cfg,
 		store:   store,
 		job:     job,
+		cache:   cache,
 	}, nil
 
 }
@@ -58,6 +64,7 @@ func (a *Api) BuildRouter() *chi.Mux {
 	router.Use(hlog.MethodHandler("http.method"))
 	router.Use(middleware.WriteRequestIDHeader())
 	router.Use(middleware.HLogAccessLogHandler())
+	router.Use(middleware.ApplyCORS(a.cfg))
 
 	router.Route("/api", func(r chi.Router) {
 
@@ -68,7 +75,7 @@ func (a *Api) BuildRouter() *chi.Mux {
 		r.Route("/ui", func(r chi.Router) {
 
 			r.Use(
-				chiMiddleware.Maybe(middleware.RequiredUserAuth(a.cfg, a.store), shouldAllowAuth),
+				chiMiddleware.Maybe(middleware.RequiredUserAuth(a.cfg, a.store, a.cache), shouldAllowAuth),
 				middleware.AppIdRequestHeader(a.store),
 				chiMiddleware.Maybe(middleware.RequiredAppMember(a.cfg, a.store), shouldAllowMember),
 			)
@@ -122,6 +129,9 @@ func (a *Api) BuildRouter() *chi.Mux {
 			r.Route("/files", func(r chi.Router) {
 				r.Get("/", a.handler.GetFiles)
 				r.Get(fmt.Sprintf("/{%s}", handler.FileParamID), a.handler.GetFile)
+				r.Post("/", a.handler.UploadFile)
+				r.Patch(fmt.Sprintf("/{%s}", handler.FileParamID), a.handler.UploadFile)
+				r.Delete(fmt.Sprintf("/{%s}", handler.FileParamID), a.handler.DeleteFile)
 			})
 
 			// domain
