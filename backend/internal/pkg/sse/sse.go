@@ -40,7 +40,8 @@ func (s *pubsubSse) Publish(ctx context.Context, id string, eventType EventType,
 		return err
 	}
 
-	if err = s.pubsub.Publish(ctx, id, payload); err != nil {
+	namespaceOption := pubsub.WithPublishNamespace("sse")
+	if err = s.pubsub.Publish(ctx, id, payload, namespaceOption); err != nil {
 		return err
 	}
 
@@ -48,10 +49,10 @@ func (s *pubsubSse) Publish(ctx context.Context, id string, eventType EventType,
 }
 
 func (s *pubsubSse) Subscribe(ctx context.Context, id string) (<-chan *Event, <-chan error, func(context.Context) error) {
-	eventChs := make(chan *Event, 2)
-	errCh := make(chan error, 2)
+	eventChs := make(chan *Event, 100)
+	errCh := make(chan error)
 
-	consumer := s.pubsub.Subscribe(ctx, id, func(payload []byte) error {
+	handler := func(payload []byte) error {
 		event := &Event{}
 		err := json.Unmarshal(payload, event)
 
@@ -65,9 +66,14 @@ func (s *pubsubSse) Subscribe(ctx context.Context, id string) (<-chan *Event, <-
 		}
 
 		return nil
-	})
+	}
 
-	return eventChs, errCh, func(ctx context.Context) error {
+	namespaceOption := pubsub.WithChannelNamespace("sse")
+	consumer := s.pubsub.Subscribe(ctx, id, handler, namespaceOption)
+
+	cleanupFn := func(ctx context.Context) error {
 		return consumer.Close()
 	}
+
+	return eventChs, errCh, cleanupFn
 }

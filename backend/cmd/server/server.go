@@ -125,7 +125,7 @@ func startServer(configFile string, logLevel string) error {
 
 	sse := sse.NewStreamer(pubsub)
 
-	protocol, err := protocol.NewProtocol(cfg, s3.GetClient())
+	protocol, err := protocol.NewProtocol(cfg, s3.GetClient(), job, sse)
 
 	if err != nil {
 		return fmt.Errorf("failed to create protocol: %w", err)

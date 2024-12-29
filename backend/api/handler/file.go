@@ -6,7 +6,6 @@ import (
 
 	"github.com/mujhtech/s3ase/api/dto"
 	"github.com/mujhtech/s3ase/api/middleware"
-	"github.com/mujhtech/s3ase/internal/pkg/request"
 	"github.com/mujhtech/s3ase/internal/pkg/response"
 	"github.com/mujhtech/s3ase/services"
 )
@@ -36,6 +35,20 @@ func getFilesQueryParams(r *http.Request) *dto.FileQueryDto {
 		Page:     page,
 		PerPage:  perPage,
 	}
+}
+
+func getCreateFileQuery(r *http.Request) (*dto.CreateFileRequestDto, error) {
+	folderId, _ := queryParam(r, "folder_id")
+	name, err := queryParamOrError(r, "name")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.CreateFileRequestDto{
+		FolderID: folderId,
+		Name:     name,
+	}, nil
 }
 
 func (h *Handler) GetFiles(w http.ResponseWriter, r *http.Request) {
@@ -113,9 +126,9 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dst := new(dto.CreateFileRequestDto)
+	dst, err := getCreateFileQuery(r)
 
-	if err := request.ReadBody(r, dst); err != nil {
+	if err != nil {
 		_ = response.BadRequest(w, r, err)
 		return
 	}

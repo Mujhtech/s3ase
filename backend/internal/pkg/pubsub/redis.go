@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/internal/redis"
@@ -129,6 +130,8 @@ func (r *redisSubscriber) start(ctx context.Context) {
 			if err := r.handler([]byte(msg.Payload)); err != nil {
 				log.Ctx(ctx).Err(err).Msg("received an error from handler function")
 			}
+		case <-time.After(5 * time.Second):
+			log.Ctx(ctx).Debug().Msg("pubsub blocked writing to subscription channel for >5 seconds")
 		}
 	}
 }

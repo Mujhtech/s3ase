@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/internal/redis"
@@ -14,8 +15,10 @@ type Publisher interface {
 type Pubsub interface {
 	Publisher
 
-	Subscribe(ctx context.Context, topic string,
-		handler func(payload []byte) error, opts ...SubscribeOption) Consumer
+	Subscribe(
+		ctx context.Context, topic string,
+		handler func(payload []byte) error, opts ...SubscribeOption,
+	) Consumer
 }
 
 type Consumer interface {
@@ -25,7 +28,6 @@ type Consumer interface {
 }
 
 func NewPubsub(cfg *config.Config, ctx context.Context, redis *redis.Redis) (Pubsub, error) {
-
 	switch cfg.Pubsub.Provider {
 	case config.PubsubProviderAwsSqs:
 		return NewAwsSqs(cfg, ctx)
@@ -34,8 +36,12 @@ func NewPubsub(cfg *config.Config, ctx context.Context, redis *redis.Redis) (Pub
 	case config.PubsubProviderGoogle:
 		return NewGooglePubsub(cfg, ctx)
 	case config.PubsubProviderKafka:
-		return NewApacheKafa(cfg, ctx)
-	default:
+		return NewApacheKafka(cfg, ctx)
+	case config.PubsubProviderAmqp:
+		return NewAMQP(cfg)
+	case config.PubsubProviderInMemory:
 		return NewInMemory(cfg)
+	default:
+		return nil, fmt.Errorf("unsupported pubsub provider: %s", cfg.Pubsub.Provider)
 	}
 }

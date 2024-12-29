@@ -39,9 +39,24 @@ func NewS3Store(cfg *config.Config, opts ...Options) (*S3Store, error) {
 	}
 
 	return &S3Store{
-		client: s3.NewFromConfig(config),
-		cfg:    cfg,
+		client: s3.NewFromConfig(config, func(o *s3.Options) {
+			o.UseAccelerate = false
+
+			// Disable HTTPS and only use HTTP (helpful for debugging requests).
+			o.EndpointOptions.DisableHTTPS = false
+
+			// if Flags.S3Endpoint != "" {
+			// 	o.BaseEndpoint = &Flags.S3Endpoint
+			// 	o.UsePathStyle = true
+			// }
+			o.Region = cfg.Aws.DefaultRegion
+		}),
+		cfg: cfg,
 	}, nil
+}
+
+func (s *S3Store) GetClient() *s3.Client {
+	return s.client
 }
 
 func WithBucket(bucket string) Options {
