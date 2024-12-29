@@ -12,7 +12,7 @@ import (
 
 const (
 	fileBaseTable    = "files"
-	fileSelectColumn = "id, uploaded_by, app_id, folder_id, metadata, created_at, updated_at, deleted_at"
+	fileSelectColumn = "id, uploaded_by, name, mime_type, extension, app_id, folder_id, metadata, size, is_public, public_id, created_at, updated_at, deleted_at"
 )
 
 type fileRepo struct {
@@ -42,16 +42,32 @@ func (f *fileRepo) CreateFile(ctx context.Context, file *models.File) error {
 	stmt := Builder.
 		Insert(fileBaseTable).
 		Columns(
+			"id",
 			"uploaded_by",
 			"app_id",
 			"folder_id",
 			"metadata",
+			"name",
+			"mime_type",
+			"extension",
+			"size",
+			"is_public",
+			"public_id",
+			"status",
 		).
 		Values(
+			file.ID,
 			file.UploadedBy,
 			file.AppID,
 			file.FolderID,
 			metadata,
+			file.Name,
+			file.MimeType,
+			file.Extension,
+			file.Size,
+			file.IsPublic,
+			file.PublicID,
+			file.Status,
 		)
 
 	sql, args, err := stmt.ToSql()
@@ -72,9 +88,29 @@ func (f *fileRepo) CreateFile(ctx context.Context, file *models.File) error {
 // UpdateFile implements FileRepository.
 func (f *fileRepo) UpdateFile(ctx context.Context, file *models.File) error {
 	stmt := Builder.
-		Update(fileBaseTable).
-		Set("folder_id", file.FolderID).
-		Set("updated_at", squirrel.Expr("NOW()")).
+		Update(fileBaseTable)
+
+	if file.Name != "" {
+		stmt = stmt.Set("name", file.Name)
+	}
+
+	if file.Status != "" {
+		stmt = stmt.Set("status", file.Status)
+	}
+
+	if file.FolderID != "" {
+		stmt = stmt.Set("folder_id", file.FolderID)
+	}
+
+	if file.Size != 0 {
+		stmt = stmt.Set("size", file.Size)
+	}
+
+	if file.Metadata != nil {
+		//metadataByte, err := json.Marshal(file.Metadata)
+	}
+
+	stmt = stmt.Set("updated_at", squirrel.Expr("NOW()")).
 		Where(squirrel.Eq{"id": file.ID}).
 		Where(excludeDeleted)
 
