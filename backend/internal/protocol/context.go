@@ -7,7 +7,6 @@ import (
 	"time"
 
 	tusdS3Handler "github.com/tus/tusd/v2/pkg/handler"
-	"golang.org/x/exp/slog"
 )
 
 // httpContext is wrapper around context.Context that also carries the
@@ -30,7 +29,7 @@ type httpContext struct {
 
 	// log is the logger for this request. It gets extended with more properties as the
 	// request progresses and is identified.
-	log *slog.Logger
+	//log *slog.Logger
 }
 
 // newContext constructs a new httpContext for the given request. This should only be done once
@@ -47,7 +46,7 @@ func (p Protocol) newContext(w http.ResponseWriter, r *http.Request) *httpContex
 	// See HookEvent.Context for more details, but the gist is that we want to give data stores
 	// some more time to finish their buisness.
 	// TODO: This should be configurable.
-	delayedCtx := newDelayedContext(cancellableCtx, time.Duration(p.config.Server.Timeout))
+	delayedCtx := newDelayedContext(cancellableCtx, time.Duration(p.cfg.Server.Timeout))
 
 	ctx := &httpContext{
 		Context: delayedCtx,

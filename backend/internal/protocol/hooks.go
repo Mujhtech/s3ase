@@ -2,8 +2,6 @@ package protocol
 
 import (
 	"context"
-
-	tusdS3Handler "github.com/tus/tusd/v2/pkg/handler"
 )
 
 // HookEvent represents an event from tusd which can be handled by the application.
@@ -24,13 +22,13 @@ type HookEvent struct {
 	Context context.Context `json:"-"`
 	// Upload contains information about the upload that caused this hook
 	// to be fired.
-	Upload tusdS3Handler.FileInfo
+	Upload FileInfo
 	// HTTPRequest contains details about the HTTP request that reached
 	// tusd.
 	HTTPRequest HTTPRequest
 }
 
-func newHookEvent(c *httpContext, info tusdS3Handler.FileInfo) HookEvent {
+func newHookEvent(c *httpContext, info FileInfo) HookEvent {
 	// The Host header field is not present in the header map, see https://pkg.go.dev/net/http#Request:
 	// > For incoming requests, the Host header is promoted to the
 	// > Request.Host field and removed from the Header map.

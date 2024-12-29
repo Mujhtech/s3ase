@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rs/zerolog"
 	tusdS3Handler "github.com/tus/tusd/v2/pkg/handler"
 )
 
@@ -142,7 +143,7 @@ func (r *bodyReader) closeWithError(err error) {
 	// SetReadDeadline with the current time causes concurrent reads to the body to time out,
 	// so the body will be closed sooner with less delay.
 	if err := r.ctx.resC.SetReadDeadline(time.Now()); err != nil {
-		r.ctx.log.Warn("NetworkTimeoutError", "error", err)
+		zerolog.Ctx(r.ctx).Warn().Msgf("NetworkTimeoutError error %v", err)
 	}
 
 	r.reader.Close()

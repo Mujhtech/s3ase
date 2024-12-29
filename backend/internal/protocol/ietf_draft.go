@@ -85,8 +85,8 @@ func getIETFDraftInteropVersion(r *http.Request) draftVersion {
 // according to the set resumable upload draft version from IETF.
 func (p Protocol) getIETFDraftUploadLimits(info FileInfo) string {
 	limits := "min-size=0"
-	if p.config.Protocol.MaxSize > 0 {
-		limits += ",max-size=" + strconv.FormatInt(p.config.Protocol.MaxSize, 10)
+	if p.cfg.Protocol.MaxSize > 0 {
+		limits += ",max-size=" + strconv.FormatInt(p.cfg.Protocol.MaxSize, 10)
 	} else if !info.SizeIsDeferred {
 		limits += ",max-size=" + strconv.FormatInt(info.Size, 10)
 	}
