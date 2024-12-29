@@ -16,10 +16,12 @@ const (
 
 	DefaultConfigFilePath string = ".env"
 
-	PubsubProviderAwsSqs PubsubProvider = "aws_sqs"
-	PubsubProviderRedis  PubsubProvider = "redis"
-	PubsubProviderGoogle PubsubProvider = "google"
-	PubsubProviderKafka  PubsubProvider = "kafka"
+	PubsubProviderAwsSqs   PubsubProvider = "aws_sqs"
+	PubsubProviderRedis    PubsubProvider = "redis"
+	PubsubProviderGoogle   PubsubProvider = "google"
+	PubsubProviderKafka    PubsubProvider = "kafka"
+	PubsubProviderAmqp     PubsubProvider = "amqp"
+	PubsubProviderInMemory PubsubProvider = "inmemory"
 
 	CacheProviderRedis    CacheProvider = "redis"
 	CacheProviderInMemory CacheProvider = "inmemory"
@@ -67,7 +69,7 @@ type Database struct {
 
 // Aws defines AWS configuration
 type Aws struct {
-	DefaultRegion string `envconfig:"AWS_DEFAULT_REGION"`
+	DefaultRegion string `json:"region" envconfig:"AWS_DEFAULT_REGION"`
 	AccessKey     string `json:"access_key" envconfig:"AWS_ACCESS_KEY"`
 	SecretKey     string `json:"secret_key" envconfig:"AWS_SECRET_KEY"`
 }
@@ -125,10 +127,16 @@ type Pubsub struct {
 	ChannelSize    int            `json:"channel_size" envconfig:"PUBSUB_CHANNEL_SIZE"`
 	HealthInterval time.Duration  `json:"health_interval" envconfig:"PUBSUB_HEALTH_INTERVAL"`
 	Google         GooglePubsub   `json:"google"`
+	Amqp           Amqp           `json:"amqp"`
+	Brokers        []string       `json:"brokers" envconfig:"PUBSUB_BROKERS"`
 }
 
 type GooglePubsub struct {
 	ProjectID string `json:"project_id" envconfig:"PUBSUB_GOOGLE_PROJECT_ID"`
+}
+
+type Amqp struct {
+	Url string `json:"url" envconfig:"PUBSUB_AMQP_URL"`
 }
 
 type Protocol struct {

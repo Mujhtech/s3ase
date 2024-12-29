@@ -34,7 +34,7 @@ var DefaultConfig = &Config{
 		DB:                 1,
 	},
 	Aws: Aws{
-		DefaultRegion: "eu-west-1",
+		DefaultRegion: "eu-west-2",
 	},
 	Server: Server{
 		Port: 5555,
@@ -51,7 +51,7 @@ var DefaultConfig = &Config{
 		Concurrency: 10,
 	},
 	Pubsub: Pubsub{
-		Provider:       PubsubProviderRedis,
+		Provider:       PubsubProviderInMemory,
 		App:            "s3ase",
 		Namespace:      "s3ase",
 		HealthInterval: 2,
