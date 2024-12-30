@@ -107,7 +107,13 @@ func (f *fileRepo) UpdateFile(ctx context.Context, file *models.File) error {
 	}
 
 	if file.Metadata != nil {
-		//metadataByte, err := json.Marshal(file.Metadata)
+		metadataByte, err := json.Marshal(file.Metadata)
+
+		if err != nil {
+			return err
+		}
+
+		stmt = stmt.Set("metadata", string(metadataByte))
 	}
 
 	stmt = stmt.Set("updated_at", squirrel.Expr("NOW()")).

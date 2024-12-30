@@ -28,21 +28,21 @@ type HookEvent struct {
 	HTTPRequest HTTPRequest
 }
 
-func newHookEvent(c *httpContext, info FileInfo) HookEvent {
-	// The Host header field is not present in the header map, see https://pkg.go.dev/net/http#Request:
-	// > For incoming requests, the Host header is promoted to the
-	// > Request.Host field and removed from the Header map.
-	// That's why we add it back manually.
-	c.req.Header.Set("Host", c.req.Host)
+// func newHookEvent(c *httpContext, info FileInfo) HookEvent {
+// 	// The Host header field is not present in the header map, see https://pkg.go.dev/net/http#Request:
+// 	// > For incoming requests, the Host header is promoted to the
+// 	// > Request.Host field and removed from the Header map.
+// 	// That's why we add it back manually.
+// 	c.req.Header.Set("Host", c.req.Host)
 
-	return HookEvent{
-		Context: c,
-		Upload:  info,
-		HTTPRequest: HTTPRequest{
-			Method:     c.req.Method,
-			URI:        c.req.RequestURI,
-			RemoteAddr: c.req.RemoteAddr,
-			Header:     c.req.Header,
-		},
-	}
-}
+// 	return HookEvent{
+// 		Context: c,
+// 		Upload:  info,
+// 		HTTPRequest: HTTPRequest{
+// 			Method:     c.req.Method,
+// 			URI:        c.req.RequestURI,
+// 			RemoteAddr: c.req.RemoteAddr,
+// 			Header:     c.req.Header,
+// 		},
+// 	}
+// }

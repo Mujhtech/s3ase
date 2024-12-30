@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -45,7 +46,9 @@ func (resp HTTPResponse) writeTo(w http.ResponseWriter) {
 	w.WriteHeader(resp.StatusCode)
 
 	if len(resp.Body) > 0 {
-		w.Write([]byte(resp.Body))
+		if _, err := w.Write([]byte(resp.Body)); err != nil {
+			log.Printf("failed to write response body: %v", err)
+		}
 	}
 }
 

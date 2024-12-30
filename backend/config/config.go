@@ -61,6 +61,9 @@ var DefaultConfig = &Config{
 		SendTimeout:    60,
 		ChannelSize:    500,
 	},
+	Protocol: Protocol{
+		MaxSize: 1073741824,
+	},
 }
 
 func LoadConfig() (*Config, error) {

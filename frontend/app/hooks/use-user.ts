@@ -21,3 +21,30 @@ export function useUser(matches?: UIMatch[]): User {
   }
   return maybeUser;
 }
+
+export function useAuthToken(matches?: UIMatch[]): string | undefined {
+  const routeMatch = useTypedMatchesData<typeof loader>({
+    id: "root",
+    matches,
+  });
+
+  return routeMatch?.accessToken;
+}
+
+export function useAppId(matches?: UIMatch[]): string | null | undefined {
+  const routeMatch = useTypedMatchesData<typeof loader>({
+    id: "root",
+    matches,
+  });
+
+  return routeMatch?.appId;
+}
+
+export function useBackendUrl(matches?: UIMatch[]): string | undefined {
+  const routeMatch = useTypedMatchesData<typeof loader>({
+    id: "root",
+    matches,
+  });
+
+  return routeMatch?.backendUrl;
+}

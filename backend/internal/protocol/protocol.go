@@ -336,7 +336,10 @@ func (p *Protocol) GetFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.sendResp(c, resp)
-	io.Copy(w, src)
+	if _, err = io.Copy(w, src); err != nil {
+		p.sendError(c, err)
+		return
+	}
 
 	src.Close()
 }

@@ -11,17 +11,28 @@ import "./tailwind.css";
 import { typedjson } from "remix-typedjson";
 import { getUser } from "./services/user.server";
 import { getFeatures } from "./services/feature.server";
+import { getAuthTokenFromSession } from "./services/auth.server";
+import { getAppIdFromSession } from "./services/app.server";
+import { env } from "./env.server";
 
 export const links: LinksFunction = () => [];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const backendUrl = env.BACKEND_URL;
   const feature = await getFeatures(request);
+
+  const accessToken = await getAuthTokenFromSession(request);
+
+  const appId = await getAppIdFromSession(request);
 
   const user = await getUser(request);
 
   return typedjson({
     user: user,
     feature: feature,
+    accessToken: accessToken,
+    appId: appId,
+    backendUrl,
   });
 };
 

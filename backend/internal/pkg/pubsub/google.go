@@ -189,7 +189,9 @@ func (s *googleSubscriber) Subscribe(ctx context.Context, topics ...string) erro
 func (s *googleSubscriber) Unsubscribe(ctx context.Context, topics ...string) error {
 	for _, topic := range s.formatTopics(topics...) {
 		if sub, exists := s.subsriptions[topic]; exists {
-			sub.Delete(ctx)
+			if err := sub.Delete(ctx); err != nil {
+				return fmt.Errorf("failed to delete subscription for %s: %w", topic, err)
+			}
 			delete(s.subsriptions, topic)
 		}
 	}
