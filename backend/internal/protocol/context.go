@@ -45,8 +45,7 @@ func (p Protocol) newContext(w http.ResponseWriter, r *http.Request) *httpContex
 	// On top of cancellableCtx, we construct a new context which gets cancelled with a delay.
 	// See HookEvent.Context for more details, but the gist is that we want to give data stores
 	// some more time to finish their buisness.
-	// TODO: This should be configurable.
-	delayedCtx := newDelayedContext(cancellableCtx, time.Duration(p.cfg.Server.Timeout))
+	delayedCtx := newDelayedContext(cancellableCtx, time.Duration(p.cfg.Server.Timeout)*time.Second)
 
 	ctx := &httpContext{
 		Context: delayedCtx,

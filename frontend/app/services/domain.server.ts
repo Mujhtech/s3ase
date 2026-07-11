@@ -1,4 +1,4 @@
-import { CreateOrUpdateDomainForm, GetDomainSchema } from "~/models/domain";
+import { CreateOrUpdateDomainForm,GetDomainSchema } from "~/models/domain";
 import { api } from "./api.server";
 
 export async function getDomain(request: Request) {
@@ -22,5 +22,10 @@ export async function createOrUpdateDomain(
     schema: GetDomainSchema,
   });
 
+  return res.data;
+}
+
+export async function verifyDomain(request: Request) {
+  const res = await api.post({ request, path: "/ui/domain/verify", schema: GetDomainSchema });
   return res.data;
 }

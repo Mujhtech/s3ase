@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,16 +13,20 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/models"
 	"github.com/mujhtech/s3ase/internal/pkg/sse"
 	"github.com/mujhtech/s3ase/job"
+	"github.com/mujhtech/s3ase/job/handlers"
 	"github.com/mujhtech/s3ase/services"
 	"github.com/rs/zerolog"
 	tusHandler "github.com/tus/tusd/v2/pkg/handler"
+	"github.com/tus/tusd/v2/pkg/memorylocker"
 	tusS3Store "github.com/tus/tusd/v2/pkg/s3store"
 )
 
@@ -65,17 +70,19 @@ type Protocol struct {
 
 	CreatedUploads chan HookEvent
 
-	job *job.Job
-	sse sse.Streamer
+	job    *job.Job
+	sse    sse.Streamer
+	locker *memorylocker.MemoryLocker
 }
 
 func NewProtocol(cfg *config.Config, s3 *s3.Client, job *job.Job, sse sse.Streamer) (*Protocol, error) {
 
 	return &Protocol{
-		s3:  s3,
-		sse: sse,
-		cfg: cfg,
-		job: job,
+		s3:     s3,
+		sse:    sse,
+		cfg:    cfg,
+		job:    job,
+		locker: memorylocker.New(),
 	}, nil
 }
 
@@ -94,14 +101,16 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 		}
 
 		if folder != nil {
-			s3Store.ObjectPrefix = folder.Name
+			s3Store.ObjectPrefix = folder.ID
 		}
 	}
 
 	// Parse headers
 	contentType := r.Header.Get("Content-Type")
 	contentDisposition := r.Header.Get("Content-Disposition")
-	willCompleteUpload := isIETFDraftUploadComplete(r)
+	// The current browser flow sends one complete file per request. The tus S3
+	// store is retained underneath for bounded multipart streaming.
+	willCompleteUpload := true
 
 	info := FileInfo{
 		MetaData: make(MetaData),
@@ -188,12 +197,14 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 
 	upload, err := s3Store.NewUpload(c, toTusFileInfo(info))
 	if err != nil {
+		p.failUpload(c, s, file, err)
 		p.sendError(c, err)
 		return
 	}
 
 	info, err = uploadToFileInfo(c, upload)
 	if err != nil {
+		p.failUpload(c, s, file, err)
 		p.sendError(c, err)
 		return
 	}
@@ -217,7 +228,6 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 	// if handler.config.NotifyCreatedUploads {
 	// 	handler.CreatedUploads <- newHookEvent(c, info)
 	// }
-	// TODO: Send sse event
 	if err = p.sse.Publish(c, s.App.ID, sse.EventTypeUploadStarted, sse.UploadProgress{
 		FileID:   file.ID,
 		Name:     file.Name,
@@ -226,8 +236,14 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 	}); err != nil {
 		log.Printf("failed to publish upload started event: %v", err)
 	}
-
-	// TODO: Send webhook event
+	p.enqueueWebhook(s.App.ID, "upload.started", file)
+	file.Status = models.FileStatusUploading
+	if err = s.FileRepo.UpdateFile(c, file); err != nil {
+		_ = s3Store.AsTerminatableUpload(upload).Terminate(c)
+		p.failUpload(c, s, file, err)
+		p.sendError(c, err)
+		return
+	}
 
 	// 2. Lock upload
 	// if handler.composer.UsesLocker {
@@ -243,6 +259,8 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 	// 3. Write chunk
 	resp, err = p.writeChunk(c, s, s3Store, resp, upload, file, info)
 	if err != nil {
+		_ = s3Store.AsTerminatableUpload(upload).Terminate(c)
+		p.failUpload(c, s, file, err)
 		p.sendError(c, err)
 		return
 	}
@@ -251,6 +269,7 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 	if willCompleteUpload && info.SizeIsDeferred {
 		info, err = uploadToFileInfo(c, upload)
 		if err != nil {
+			p.failUpload(c, s, file, err)
 			p.sendError(c, err)
 			return
 		}
@@ -259,6 +278,7 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 
 		lengthDeclarableUpload := s3Store.AsLengthDeclarableUpload(upload)
 		if err := lengthDeclarableUpload.DeclareLength(c, uploadLength); err != nil {
+			p.failUpload(c, s, file, err)
 			p.sendError(c, err)
 			return
 		}
@@ -268,13 +288,63 @@ func (p *Protocol) UploadFile(s services.CreateFileService, w http.ResponseWrite
 
 		resp, err = p.finishUploadIfComplete(c, s, resp, upload, file, info)
 		if err != nil {
+			p.failUpload(c, s, file, err)
 			p.sendError(c, err)
 			return
 		}
 
 	}
 
+	body, err := json.Marshal(struct {
+		Data    *models.File `json:"data"`
+		Message string       `json:"message"`
+	}{
+		Data:    file,
+		Message: "file uploaded",
+	})
+	if err != nil {
+		p.sendError(c, err)
+		return
+	}
+	resp.Header["Content-Type"] = "application/json; charset=utf-8"
+	resp.Body = string(body)
+
 	p.sendResp(c, resp)
+}
+
+func (p *Protocol) failUpload(c *httpContext, s services.CreateFileService, file *models.File, uploadErr error) {
+	if file == nil {
+		return
+	}
+	file.Status = models.FileStatusFailed
+	if err := s.FileRepo.UpdateFile(c, file); err != nil {
+		zerolog.Ctx(c).Error().Err(err).Msg("failed to persist upload failure")
+	}
+	if err := p.sse.Publish(c, file.AppID, sse.EventTypeUploadFailed, sse.UploadProgress{
+		FileID: file.ID,
+		Name:   file.Name,
+		Status: sse.UploadProgressStatusFailed,
+	}); err != nil {
+		zerolog.Ctx(c).Error().Err(err).Msg("failed to publish upload failure")
+	}
+	p.enqueueWebhook(file.AppID, "upload.failed", file)
+	zerolog.Ctx(c).Error().Err(uploadErr).Str("file_id", file.ID).Msg("upload failed")
+}
+
+func (p *Protocol) enqueueWebhook(appID, event string, data interface{}) {
+	rawData, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	payload, err := json.Marshal(handlers.WebhookPayload{
+		ID: uuid.NewString(), AppID: appID, Event: event, CreatedAt: time.Now(), Data: rawData,
+	})
+	if err != nil {
+		return
+	}
+	if err := p.job.Client.Enqueue(job.QueueNameDefault, job.JobNameWebhook, &job.ClientPayload{Data: payload}); err != nil {
+		log.Printf("failed to enqueue webhook: %v", err)
+	}
 }
 
 func (p *Protocol) GetFile(w http.ResponseWriter, r *http.Request) {
@@ -441,9 +511,10 @@ func (p *Protocol) writeChunk(c *httpContext, s services.CreateFileService, s3st
 			c.cancel(cause)
 		}
 
-		p.sendProgressMessages(c, s, file, info)
+		stopProgress := p.sendProgressMessages(c, s, file, info)
 
 		bytesWritten, err = upload.WriteChunk(c, offset, c.body)
+		stopProgress()
 
 		// If we encountered an error while reading the body from the HTTP request, log it, but only include
 		// it in the response, if the store did not also return an error.
@@ -546,6 +617,7 @@ func (p *Protocol) emitFinishEvents(c *httpContext, s services.CreateFileService
 	}); err != nil {
 		log.Printf("failed to publish upload completed event: %v", err)
 	}
+	p.enqueueWebhook(file.AppID, "upload.completed", file)
 
 	// handle update file status
 
@@ -615,7 +687,7 @@ func (p *Protocol) sendResp(c *httpContext, resp HTTPResponse) {
 // sendProgressMessage will send a notification over the UploadProgress channel
 // indicating how much data has been transfered to the server.
 // It will stop sending these instances once the provided context is done.
-func (p *Protocol) sendProgressMessages(c *httpContext, s services.CreateFileService, file *models.File, info FileInfo) {
+func (p *Protocol) sendProgressMessages(c *httpContext, s services.CreateFileService, file *models.File, info FileInfo) func() {
 	//hook := newHookEvent(c, info)
 
 	previousOffset := int64(0)
@@ -646,17 +718,29 @@ func (p *Protocol) sendProgressMessages(c *httpContext, s services.CreateFileSer
 		//}
 	}
 
+	done := make(chan struct{})
+	stopped := make(chan struct{})
 	go func() {
+		defer close(stopped)
+		ticker := time.NewTicker(p.cfg.Protocol.UploadProgressInterval)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-c.Done():
+			case <-done:
 				emitProgress()
 				return
-			case <-time.After(p.cfg.Protocol.UploadProgressInterval):
+			case <-ticker.C:
 				emitProgress()
 			}
 		}
 	}()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			close(done)
+			<-stopped
+		})
+	}
 }
 
 func validateUploadId(newId string) error {

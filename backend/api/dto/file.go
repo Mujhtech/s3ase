@@ -2,6 +2,7 @@ package dto
 
 type FileQueryDto struct {
 	FolderID string `json:"folder_id"`
+	Search   string `json:"search"`
 	Page     int    `json:"page"`
 	PerPage  int    `json:"per_page"`
 }

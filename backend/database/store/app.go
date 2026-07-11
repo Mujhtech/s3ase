@@ -152,10 +152,12 @@ func (a *appRepo) FindAppByID(ctx context.Context, id string) (*models.App, erro
 // FindAppsByUserID implements AppRepository.
 func (a *appRepo) FindAppsByUserID(ctx context.Context, userID string) ([]*models.App, error) {
 	stmt := Builder.
-		Select(appSelectColumn).
-		From(appBaseTable).
-		Where(squirrel.Eq{"owner_id": userID}).
-		Where(excludeDeleted)
+		Select("a.id, a.owner_id, a.name, a.slug, a.description, a.bucket, a.region, a.metadata, a.created_at, a.updated_at, a.deleted_at").
+		From("apps a").
+		Join("app_members m ON m.app_id = a.id AND m.deleted_at IS NULL").
+		Where(squirrel.Eq{"m.user_id": userID}).
+		Where("a.deleted_at IS NULL").
+		OrderBy("a.created_at ASC")
 
 	sql, args, err := stmt.ToSql()
 

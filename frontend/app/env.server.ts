@@ -12,3 +12,4 @@ const EnvironmentSchema = z.object({
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
 export const env = EnvironmentSchema.parse(process.env);
+export const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? env.BACKEND_URL;

@@ -12,7 +12,7 @@ import (
 
 const (
 	fileBaseTable    = "files"
-	fileSelectColumn = "id, uploaded_by, name, mime_type, extension, app_id, folder_id, metadata, size, is_public, public_id, created_at, updated_at, deleted_at"
+	fileSelectColumn = "id, uploaded_by, name, mime_type, extension, app_id, folder_id, metadata, size, is_public, public_id, status, created_at, updated_at, deleted_at"
 )
 
 type fileRepo struct {
@@ -98,7 +98,7 @@ func (f *fileRepo) UpdateFile(ctx context.Context, file *models.File) error {
 		stmt = stmt.Set("status", file.Status)
 	}
 
-	if file.FolderID != "" {
+	if file.FolderID.Valid {
 		stmt = stmt.Set("folder_id", file.FolderID)
 	}
 
@@ -205,15 +205,34 @@ func (f *fileRepo) FindFilesByAppID(ctx context.Context, appID string) ([]*model
 
 // FindFilesByAppIDWithQuery implements FileRepository.
 func (f *fileRepo) FindFilesByAppIDWithQuery(ctx context.Context, appID string, query *dto.FileQueryDto) ([]*models.File, error) {
+	if query == nil {
+		query = &dto.FileQueryDto{Page: 1, PerPage: 10}
+	}
+	if query.Page < 1 {
+		query.Page = 1
+	}
+	if query.PerPage < 1 {
+		query.PerPage = 10
+	}
 	stmt := Builder.
 		Select(fileSelectColumn).
 		From(fileBaseTable).
 		Where(squirrel.Eq{"app_id": appID}).
+		Where(squirrel.Eq{"status": models.FileStatusCompleted}).
 		Where(excludeDeleted)
 
 	if query.FolderID != "" {
 		stmt = stmt.Where(squirrel.Eq{"folder_id": query.FolderID})
+	} else {
+		stmt = stmt.Where("folder_id IS NULL")
 	}
+	if query.Search != "" {
+		stmt = stmt.Where("name ILIKE ?", "%"+query.Search+"%")
+	}
+	stmt = stmt.
+		OrderBy("created_at DESC").
+		Limit(uint64(query.PerPage)).
+		Offset(uint64((query.Page - 1) * query.PerPage))
 
 	sql, args, err := stmt.ToSql()
 
@@ -256,7 +275,7 @@ func (f *fileRepo) FindFilesByUserID(ctx context.Context, userID string) ([]*mod
 	stmt := Builder.
 		Select(fileSelectColumn).
 		From(fileBaseTable).
-		Where(squirrel.Eq{"created_by": userID}).
+		Where(squirrel.Eq{"uploaded_by": userID}).
 		Where(excludeDeleted)
 
 	sql, args, err := stmt.ToSql()

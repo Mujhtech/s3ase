@@ -1,11 +1,11 @@
 import { ServerResponseSchema } from "~/models/default";
-import { api } from "./api.server";
 import {
-  CreateFileForm,
-  GetFileSchema,
-  GetFilesQuery,
-  GetFilesSchema,
+CreateFileForm,
+GetFileSchema,
+GetFilesQuery,
+GetFilesSchema,
 } from "~/models/file";
+import { api } from "./api.server";
 
 export async function getFiles(request: Request, query: GetFilesQuery = {}) {
   const res = await api.get({

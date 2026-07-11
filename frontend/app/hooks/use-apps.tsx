@@ -1,7 +1,7 @@
 import { UIMatch } from "@remix-run/react";
-import { useTypedMatchesData } from "./use-typed-match";
-import type { loader as appLoader } from "~/routes/_app.app.$appSlug/route";
 import invariant from "tiny-invariant";
+import type { loader as appLoader } from "~/routes/_app.app.$appSlug/route";
+import { useTypedMatchesData } from "./use-typed-match";
 
 export function useOptionalApps(matches?: UIMatch[]) {
   const data = useTypedMatchesData<typeof appLoader>({

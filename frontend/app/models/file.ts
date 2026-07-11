@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 
 export const MediaUploadSchema = z.object({
   type: z.enum(["file", "folder"]),
@@ -8,6 +8,21 @@ export const MediaUploadSchema = z.object({
 export const FileSchema = z.object({
   id: z.string(),
   name: z.string(),
+  app_id: z.string(),
+  folder_id: z.string().nullable(),
+  mime_type: z.string(),
+  extension: z.string(),
+  size: z.number(),
+  is_public: z.boolean(),
+  public_id: z.string(),
+  status: z.enum([
+    "started",
+    "pending",
+    "uploading",
+    "completed",
+    "cancelled",
+    "failed",
+  ]),
   created_at: z.string(),
   updated_at: z.string(),
 });

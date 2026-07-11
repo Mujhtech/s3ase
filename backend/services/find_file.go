@@ -22,6 +22,9 @@ func (c *FindFileService) Run(ctx context.Context) (*models.File, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := requireSameApp(c.App.ID, file.AppID); err != nil {
+		return nil, err
+	}
 
 	return file, nil
 }

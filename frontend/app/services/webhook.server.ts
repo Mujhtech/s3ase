@@ -1,10 +1,10 @@
 import { ServerResponseSchema } from "~/models/default";
-import { api } from "./api.server";
 import {
-  CreateWebhookForm,
-  GetWebhookSchema,
-  GetWebhooksSchema,
+CreateWebhookForm,
+GetWebhookSchema,
+GetWebhooksSchema,
 } from "~/models/webhook";
+import { api } from "./api.server";
 
 export async function getWebhooks(request: Request) {
   const res = await api.get({

@@ -25,6 +25,9 @@ func (c *UpdateFolderService) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if err := requireSameApp(c.App.ID, folder.AppID); err != nil {
+		return err
+	}
 
 	if err := c.FolderRepo.UpdateFolder(ctx, &models.Folder{
 		ID:          folder.ID,
@@ -33,6 +36,7 @@ func (c *UpdateFolderService) Run(ctx context.Context) error {
 		Description: null.NewString(c.Body.Description, c.Body.Description != ""),
 		CreatedBy:   c.User.ID,
 		Metadata:    map[string]interface{}{},
+		ParentID:    folder.ParentID,
 	}); err != nil {
 		return err
 	}

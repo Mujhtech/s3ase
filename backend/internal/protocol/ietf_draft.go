@@ -26,6 +26,9 @@ func getIETFDraftUploadLength(r *http.Request) (length int64, lengthIsDeferred b
 	hasLengthFromContentLength := false
 
 	willCompleteUpload := isIETFDraftUploadComplete(r)
+	if getIETFDraftInteropVersion(r) == "" && r.Method == http.MethodPost {
+		willCompleteUpload = true
+	}
 	if willCompleteUpload && r.ContentLength != -1 {
 		lengthFromContentLength = r.ContentLength
 		hasLengthFromContentLength = true

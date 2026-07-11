@@ -13,7 +13,7 @@ const (
 	QueryParamPage    = "page"
 	QueryParamPerPage = "per_page"
 
-	PerPageDefault = 10
+	PerPageDefault = 100
 	PerPageMax     = 100
 )
 

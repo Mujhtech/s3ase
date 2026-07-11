@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/mujhtech/s3ase/api/dto"
@@ -40,10 +39,13 @@ func TestUpdateApiKeyService_Run(t *testing.T) {
 				apiKeyId: "key-id",
 			},
 			mockFn: func(s *UpdateApiKeyService) {
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 				apiKey, _ := s.ApiKeyRepo.(*mocks.MockApiKeyRepository)
 				apiKey.EXPECT().FindApiKeyByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.ApiKey{ID: "key-id", Name: "original-name"}, nil)
+					Return(&models.ApiKey{ID: "key-id", AppID: "app-id", Name: "original-name"}, nil)
 				apiKey.EXPECT().
 					UpdateApiKey(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -63,14 +65,9 @@ func TestUpdateApiKeyService_Run(t *testing.T) {
 				apiKeyId: "key-id",
 			},
 			mockFn: func(s *UpdateApiKeyService) {
-				apiKey, _ := s.ApiKeyRepo.(*mocks.MockApiKeyRepository)
-				apiKey.EXPECT().FindApiKeyByID(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(&models.ApiKey{ID: "key-id", Name: "original-name"}, nil)
-				apiKey.EXPECT().
-					UpdateApiKey(gomock.Any(), gomock.Any()).
-					Times(1).
-					Return(fmt.Errorf("not authorized"))
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleMember}, nil)
 			},
 			wantErr: errors.ErrNotAuthorized,
 		},
@@ -81,11 +78,12 @@ func TestUpdateApiKeyService_Run(t *testing.T) {
 			defer ctrl.Finish()
 
 			service := &UpdateApiKeyService{
-				App:        tt.args.app,
-				ApiKeyRepo: mocks.NewMockApiKeyRepository(ctrl),
-				User:       tt.args.user,
-				Body:       tt.args.req,
-				ApiKeyId:   tt.args.apiKeyId,
+				App:           tt.args.app,
+				AppMemberRepo: mocks.NewMockAppMemberRepository(ctrl),
+				ApiKeyRepo:    mocks.NewMockApiKeyRepository(ctrl),
+				User:          tt.args.user,
+				Body:          tt.args.req,
+				ApiKeyId:      tt.args.apiKeyId,
 			}
 			if tt.mockFn != nil {
 				tt.mockFn(service)

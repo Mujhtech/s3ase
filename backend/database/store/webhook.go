@@ -108,6 +108,7 @@ func (a *webhookRepo) UpdateWebhook(ctx context.Context, apiKey *models.Webhook)
 		Set("name", apiKey.Name).
 		Set("description", apiKey.Description).
 		Set("url", apiKey.URL).
+		Set("metadata", apiKey.Metadata).
 		Where(squirrel.Eq{"id": apiKey.ID}).
 		Where(excludeDeleted)
 

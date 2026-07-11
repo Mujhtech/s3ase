@@ -60,6 +60,11 @@ func (g googleProvider) GetUser(token *oauth2.Token) (*User, error) {
 
 	data := &User{
 		AuthenticationMethod: "google",
+		Emails: Emails{{
+			Email:    user.Email,
+			Verified: user.EmailVerified,
+			Primary:  true,
+		}},
 		Metadata: &Claims{
 			Issuer:        GoogleUrl,
 			Subject:       user.ID,

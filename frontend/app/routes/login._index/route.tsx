@@ -1,22 +1,21 @@
-import { SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
-import React from "react";
+import { SiGithub,SiGoogle } from "@icons-pack/react-simple-icons";
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { Form } from "@remix-run/react";
+import { typedjson,useTypedLoaderData } from "remix-typedjson";
 import { Boxes } from "~/components/login-bg-boxes";
 import { Button } from "~/components/ui/button";
-import { Form } from "@remix-run/react";
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
-import { commitSession, setRedirectTo } from "~/services/redirect-to.server";
-import { requestUrl } from "~/services/request-url.server";
-import { env } from "~/env.server";
 import { Input } from "~/components/ui/input";
+import { publicBackendUrl } from "~/env.server";
 import { useFeature } from "~/hooks/use-feature";
+import { commitSession,setRedirectTo } from "~/services/redirect-to.server";
+import { requestUrl } from "~/services/request-url.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // redirect user to home is already logged in
 
   const url = requestUrl(request);
   const redirectTo = url.searchParams.get("redirectTo");
-  const backendUrl = env.BACKEND_URL;
+  const backendUrl = publicBackendUrl;
 
   if (redirectTo) {
     const session = await setRedirectTo(request, redirectTo);

@@ -12,10 +12,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const (
-	appIDHeader     = "x-app-id"
-	appKey      key = iota
-)
+const appIDHeader = "x-app-id"
+
+type appContextKey struct{}
+
+var appKey appContextKey
 
 func AppIdRequestHeader(store *store.Store) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {

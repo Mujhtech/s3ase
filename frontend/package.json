@@ -2,13 +2,14 @@
   "name": "s3-wrapper",
   "private": true,
   "sideEffects": false,
-  "type": "module",
+	"type": "module",
+	"packageManager": "pnpm@9.15.0",
   "scripts": {
     "build": "remix vite:build",
     "dev": "node ./server.mjs",
     "start": "cross-env NODE_ENV=production node ./server.mjs",
     "setup": "pnpm run build",
-    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "lint": "eslint --ignore-path .gitignore .",
     "typecheck": "tsc",
     "test": "vitest",
     "coverage": "vitest run --coverage"

@@ -8,7 +8,6 @@ export const MemberSchema = z.object({
   app_id: z.string(),
   user: UserSchema,
   role: z.string(),
-  description: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -25,5 +24,10 @@ export const GetMembersSchema = ServerResponseSchema.extend({
 
 export const SendInviteFormSchema = z.object({
   email: z.string().email(),
-  role: z.enum(["owner", "member"]).default("member"),
+  role: z.literal("member").default("member"),
+});
+
+export const RemoveMemberFormSchema = z.object({
+  memberId: z.string().min(1),
+  intent: z.literal("remove"),
 });

@@ -1,15 +1,18 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 
 export const ApiKeySchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable().transform((value) => value ?? ""),
   access: z.string(),
-  expired_at: z.string().optional(),
+  expired_at: z.number().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
-  last_used: z.string().optional(),
+  last_used: z.string().nullable().optional(),
+  key_prefix: z.string().optional(),
+  last_four: z.string().optional(),
+  secret: z.string().optional(),
 });
 
 export type ApiKey = z.infer<typeof ApiKeySchema>;

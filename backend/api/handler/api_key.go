@@ -16,7 +16,7 @@ const (
 )
 
 func getApiKeyIdFromPath(r *http.Request) (string, error) {
-	rawRef, err := pathParamOrError(r, WebhookParamId)
+	rawRef, err := pathParamOrError(r, ApiKeyParamId)
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +44,7 @@ func (h *Handler) GetApiKeys(w http.ResponseWriter, r *http.Request) {
 	apiKeys, err := findApiKeysService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *Handler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
 	apiKey, err := createApiKeyService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -111,19 +111,20 @@ func (h *Handler) UpdateApiKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateApiKeyService := services.UpdateApiKeyService{
-		ApiKeyId:   apiKeyId,
-		App:        app,
-		ApiKeyRepo: h.store.ApiKeyRepo,
-		User:       session.User,
-		Body:       dst,
+		ApiKeyId:      apiKeyId,
+		App:           app,
+		AppMemberRepo: h.store.AppMemberRepo,
+		ApiKeyRepo:    h.store.ApiKeyRepo,
+		User:          session.User,
+		Body:          dst,
 	}
 
 	if err = updateApiKeyService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
-	_ = response.Created(w, r, "api key updated", nil)
+	_ = response.Ok(w, r, "api key updated", nil)
 }
 
 func (h *Handler) DeleteApiKey(w http.ResponseWriter, r *http.Request) {
@@ -144,16 +145,17 @@ func (h *Handler) DeleteApiKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleteApiKeyService := services.DeleteApiKeyService{
-		ApiKeyId:   apiKeyId,
-		App:        app,
-		ApiKeyRepo: h.store.ApiKeyRepo,
-		User:       session.User,
+		ApiKeyId:      apiKeyId,
+		App:           app,
+		AppMemberRepo: h.store.AppMemberRepo,
+		ApiKeyRepo:    h.store.ApiKeyRepo,
+		User:          session.User,
 	}
 
 	if err = deleteApiKeyService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
-	_ = response.Created(w, r, "api key deleted", nil)
+	_ = response.Ok(w, r, "api key deleted", nil)
 }

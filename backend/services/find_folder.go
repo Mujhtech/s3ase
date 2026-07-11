@@ -22,6 +22,9 @@ func (c *FindFolderService) Run(ctx context.Context) (*models.Folder, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := requireSameApp(c.App.ID, folder.AppID); err != nil {
+		return nil, err
+	}
 
 	return folder, nil
 }

@@ -1,15 +1,19 @@
-import React, { useCallback, useMemo } from "react";
 import {
-  Spinner,
-  Image,
-  CaretUp,
-  CaretDown,
-  X,
-  CheckCircle,
-  WarningCircle,
+CaretDown,
+CaretUp,
+CheckCircle,
+Image,
+Pause,
+Play,
+Spinner,
+Trash,
+WarningCircle,
+X,
 } from "@phosphor-icons/react";
+import React,{ useCallback,useMemo } from "react";
 import Paragraph from "../ui/paragraph";
 import { Progress } from "../ui/progress";
+import { useUploadManager } from "./upload-manager";
 
 export type FileUploadProgress = {
   id: string;
@@ -22,6 +26,7 @@ export type FileUploadProgress = {
     | "completed"
     | "failed"
     | "pending"
+    | "paused"
     | "cancelled";
 };
 
@@ -87,23 +92,61 @@ export default function FilesUploadState({
 }
 
 const FileUploadStateCard = ({ file }: { file: FileUploadProgress }) => {
+  const { pauseUpload, resumeUpload, cancelUpload } = useUploadManager();
+  const canPause = file.status === "uploading" || file.status === "pending";
+  const canResume = file.status === "paused" || file.status === "failed";
+  const canCancel = canPause || canResume;
+
   return (
-    <button className="flex flex-col gap-2 px-4 py-2 w-full">
+    <div className="flex flex-col gap-2 px-4 py-2 w-full">
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <Image className="w-5 h-5 text-muted-foreground" />
           <Paragraph>{file.name}</Paragraph>
         </div>
-        {file.status === "completed" ? (
-          <CheckCircle className="w-5 h-5 text-primary" />
-        ) : file.status === "failed" ? (
-          <WarningCircle className="w-5 h-5 text-primary" />
-        ) : (
-          <Spinner className="w-5 h-5 text-primary animate-spin" />
-        )}
+        <div className="flex items-center gap-2">
+          {canPause && (
+            <button
+              type="button"
+              aria-label={`Pause ${file.name}`}
+              onClick={() => void pauseUpload(file.id)}
+            >
+              <Pause className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          {canResume && (
+            <button
+              type="button"
+              aria-label={`Resume ${file.name}`}
+              onClick={() => resumeUpload(file.id)}
+            >
+              <Play className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          {canCancel && (
+            <button
+              type="button"
+              aria-label={`Cancel ${file.name}`}
+              onClick={() => void cancelUpload(file.id)}
+            >
+              <Trash className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          {file.status === "completed" ? (
+            <CheckCircle className="w-5 h-5 text-primary" />
+          ) : file.status === "failed" || file.status === "cancelled" ? (
+            <WarningCircle className="w-5 h-5 text-primary" />
+          ) : file.status === "paused" ? (
+            <Pause className="w-5 h-5 text-muted-foreground" />
+          ) : (
+            <Spinner className="w-5 h-5 text-primary animate-spin" />
+          )}
+        </div>
       </div>
 
-      {file.status === "uploading" && <Progress value={file.progress} />}
-    </button>
+      {(file.status === "uploading" || file.status === "paused") && (
+        <Progress value={file.progress} />
+      )}
+    </div>
   );
 };

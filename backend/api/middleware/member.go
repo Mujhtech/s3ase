@@ -9,16 +9,15 @@ import (
 	"github.com/mujhtech/s3ase/internal/pkg/response"
 	"github.com/rs/zerolog"
 
-	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/models"
 	"github.com/mujhtech/s3ase/database/store"
 )
 
-const (
-	appMemberKey key = iota
-)
+type appMemberContextKey struct{}
 
-func RequiredAppMember(cfg *config.Config, strs *store.Store) func(http.Handler) http.Handler {
+var appMemberKey appMemberContextKey
+
+func RequiredAppMember(strs *store.Store) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -31,27 +30,21 @@ func RequiredAppMember(cfg *config.Config, strs *store.Store) func(http.Handler)
 			}
 
 			member, err := strs.AppMemberRepo.FindAppMemberByAppIDAndUserId(ctx, app.ID, session.User.ID)
-
-			if err != nil && !errors.Is(err, store.ErrNotFound) {
+			if errors.Is(err, store.ErrNotFound) || member == nil {
+				_ = response.Unauthorized(w, r, errs.ErrNotAuthorized)
+				return
+			}
+			if err != nil {
 				_ = response.Unauthorized(w, r, err)
 				return
 			}
 
-			if member != nil {
+			ctx = context.WithValue(ctx, appMemberKey, member)
 
-				if member.Role != models.AppMemberRoleOwner {
-					_ = response.Unauthorized(w, r, errs.ErrNotAuthorized)
-					return
-				}
-
-				//ctx = context.WithValue(ctx, appMemberKey, member.ID)
-
-				log := zerolog.Ctx(ctx)
-				log.UpdateContext(func(c zerolog.Context) zerolog.Context {
-					return c.Str("member_id", member.ID)
-				})
-
-			}
+			log := zerolog.Ctx(ctx)
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str("member_id", member.ID)
+			})
 
 			h.ServeHTTP(w, r.WithContext(ctx))
 		})

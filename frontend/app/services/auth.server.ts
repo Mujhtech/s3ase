@@ -1,10 +1,9 @@
-import { redirect } from "@remix-run/node";
+import { createCookieSessionStorage,redirect } from "@remix-run/node";
 
-import { createCookieSessionStorage } from "@remix-run/node";
 import { env } from "~/env.server";
 
 // export the whole sessionStorage object
-const { commitSession, getSession, destroySession } =
+const { commitSession, getSession } =
   createCookieSessionStorage({
     cookie: {
       name: "__auth_session", // use any name you want here
@@ -48,6 +47,6 @@ export async function clearAuthSession(request: Request) {
   return session;
 }
 
-export async function logout(request: Request) {
+export async function logout() {
   return redirect("/logout");
 }

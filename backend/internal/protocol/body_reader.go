@@ -23,13 +23,7 @@ import (
 // the error but this can instead be done in the handler.
 // In addition, the bodyReader keeps track of how many bytes were read.
 type bodyReader struct {
-	// bytesCounter is the first field to ensure that it's properly aligned,
-	// otherwise we run into alignment issues on some 32-bit builds.
-	// See https://github.com/tus/tusd/issues/1047
-	// See https://pkg.go.dev/sync/atomic#pkg-note-BUG
-	// TODO: In the future we should move all of these values to the safe
-	// atomic.Uint64 type, which takes care of alignment automatically.
-	bytesCounter int64
+	bytesCounter atomic.Int64
 	ctx          *httpContext
 	reader       io.ReadCloser
 	onReadDone   func()
@@ -56,7 +50,7 @@ func (r *bodyReader) Read(b []byte) (int, error) {
 	}
 
 	n, err := r.reader.Read(b)
-	atomic.AddInt64(&r.bytesCounter, int64(n))
+	r.bytesCounter.Add(int64(n))
 	if !errors.Is(err, os.ErrDeadlineExceeded) {
 		// If the timeout wasn't exceeded (due to SetReadDeadline), invoke
 		// the callback so the deadline can be extended
@@ -132,7 +126,7 @@ func (r *bodyReader) hasError() error {
 }
 
 func (r *bodyReader) bytesRead() int64 {
-	return atomic.LoadInt64(&r.bytesCounter)
+	return r.bytesCounter.Load()
 }
 
 func (r *bodyReader) closeWithError(err error) {

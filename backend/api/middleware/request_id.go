@@ -8,12 +8,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type key int
+const requestIDHeader = "X-Request-Id"
 
-const (
-	requestIDHeader     = "X-Request-Id"
-	requestIDKey    key = iota
-)
+type requestIDContextKey struct{}
+
+var requestIDKey requestIDContextKey
 
 func WriteRequestIDHeader() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {

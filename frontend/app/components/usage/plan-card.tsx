@@ -1,18 +1,19 @@
-import React from "react";
-import { Card, CardContent, CardHeader } from "../ui/card";
 import { Form } from "@remix-run/react";
-import { Button } from "../ui/button";
-import { CheckIcon, X } from "lucide-react";
+import { CheckIcon,X } from "lucide-react";
+import React from "react";
 import { cn } from "~/lib/utils";
+import { Button } from "../ui/button";
+import { Card,CardContent,CardHeader } from "../ui/card";
 import Paragraph from "../ui/paragraph";
 import { Separator } from "../ui/separator";
 
-export function BasicPlanCard() {
+export function BasicPlanCard({ currentPlan }: { currentPlan: string }) {
   return (
     <PlanCard
       title="Basic"
       price={1}
       storage={2}
+    current={currentPlan === "basic"}
       feature={
         <ul className="flex flex-col gap-3">
           <Item checked>Shared Storage</Item>
@@ -31,13 +32,14 @@ export function BasicPlanCard() {
   );
 }
 
-export function ProPlanCard() {
+export function ProPlanCard({ currentPlan }: { currentPlan: string }) {
   return (
     <PlanCard
       recommended
       title="Pro"
       price={30}
       storage={100}
+    current={currentPlan === "pro"}
       feature={
         <ul className="flex flex-col gap-3">
           <Item checked>Dedicated Storage</Item>
@@ -56,10 +58,11 @@ export function ProPlanCard() {
   );
 }
 
-export function EnterpisePlanCard() {
+export function EnterpisePlanCard({ currentPlan }: { currentPlan: string }) {
   return (
     <PlanCard
       title="Enterprise"
+    current={currentPlan === "enterprise"}
       feature={
         <ul className="flex flex-col gap-3">
           <Item checked>Dedicated Storage</Item>
@@ -84,12 +87,14 @@ export default function PlanCard({
   feature,
   price,
   storage,
+  current,
 }: {
   recommended?: boolean;
   title: string;
   feature: React.ReactNode;
   price?: number;
   storage?: number;
+  current?: boolean;
 }) {
   return (
     <Card className={cn("w-full", recommended && "border-white border-2")}>
@@ -108,8 +113,8 @@ export default function PlanCard({
             {storage ? `Up to ${storage}gb storage` : "Custom storage"}
           </Paragraph>
           <Separator />
-          <Button className="my-5 !h-8 w-full" disabled={true}>
-            Upgrade
+      <Button className="my-5 !h-8 w-full" disabled type="button">
+      {current ? "Current plan" : "Billing unavailable"}
           </Button>
           {feature}
         </CardContent>

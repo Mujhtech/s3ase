@@ -11,7 +11,7 @@ import (
 
 const (
 	apiKeyBaseTable    = "api_keys"
-	apiKeySelectColumn = "id,  app_id, created_by, name, description, access, expired_at, metadata, created_at, updated_at, deleted_at"
+	apiKeySelectColumn = "id, app_id, created_by, name, description, access, expired_at, last_used, COALESCE(key_hash, '') AS key_hash, COALESCE(key_prefix, '') AS key_prefix, COALESCE(last_four, '') AS last_four, metadata, created_at, updated_at, deleted_at"
 )
 
 type apiKeyRepo struct {
@@ -49,6 +49,9 @@ func (a *apiKeyRepo) CreateApiKey(ctx context.Context, apiKey *models.ApiKey) er
 			"access",
 			"expired_at",
 			"metadata",
+			"key_hash",
+			"key_prefix",
+			"last_four",
 		).
 		Values(
 			apiKey.ID,
@@ -59,6 +62,9 @@ func (a *apiKeyRepo) CreateApiKey(ctx context.Context, apiKey *models.ApiKey) er
 			apiKey.Access,
 			apiKey.ExpiredAt,
 			metadata,
+			apiKey.KeyHash,
+			apiKey.KeyPrefix,
+			apiKey.LastFour,
 		)
 
 	sql, args, err := stmt.ToSql()
@@ -73,6 +79,33 @@ func (a *apiKeyRepo) CreateApiKey(ctx context.Context, apiKey *models.ApiKey) er
 		return ProcessSQLErrorfWithCtx(ctx, sql, err, "failed to create api key")
 	}
 
+	return nil
+}
+
+func (a *apiKeyRepo) FindApiKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	stmt := Builder.Select(apiKeySelectColumn).From(apiKeyBaseTable).
+		Where(squirrel.Eq{"key_hash": hash}).Where(excludeDeleted)
+	sql, args, err := stmt.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	apiKey := new(models.ApiKey)
+	if err := a.db.GetDB().GetContext(ctx, apiKey, sql, args...); err != nil {
+		return nil, ProcessSQLErrorfWithCtx(ctx, sql, err, "failed to find api key by hash")
+	}
+	return apiKey, nil
+}
+
+func (a *apiKeyRepo) TouchApiKey(ctx context.Context, id string) error {
+	stmt := Builder.Update(apiKeyBaseTable).Set("last_used", squirrel.Expr("NOW()")).
+		Set("updated_at", squirrel.Expr("NOW()")).Where(squirrel.Eq{"id": id}).Where(excludeDeleted)
+	sql, args, err := stmt.ToSql()
+	if err != nil {
+		return err
+	}
+	if _, err := a.db.GetDB().ExecContext(ctx, sql, args...); err != nil {
+		return ProcessSQLErrorfWithCtx(ctx, sql, err, "failed to update api key usage")
+	}
 	return nil
 }
 

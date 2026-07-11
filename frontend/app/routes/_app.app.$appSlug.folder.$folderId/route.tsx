@@ -1,30 +1,28 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import React, { useState } from "react";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { getFiles, uploadFile } from "~/services/file.server";
-import { getFolder } from "~/services/folder.server";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import { z } from "zod";
-import { useApp } from "~/hooks/use-apps";
-import FileLayout from "~/components/file/file-layout";
 import { ChevronRight } from "lucide-react";
-import FilesPageContext from "~/components/file/files-page-context";
+import { useState } from "react";
+import { typedjson,useTypedLoaderData } from "remix-typedjson";
+import { z } from "zod";
 import DragAndDropArea from "~/components/file/drag-and-drop-area";
 import FileCard from "~/components/file/file-card";
+import FileLayout from "~/components/file/file-layout";
+import FilesPageContext from "~/components/file/files-page-context";
 import Paragraph from "~/components/ui/paragraph";
+import { getFiles } from "~/services/file.server";
+import { getFolder } from "~/services/folder.server";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 
 const AppWithFolderParamSchema = AppSlugParamSchema.extend({
   folderId: z.string(),
 });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { appSlug, folderId } = AppWithFolderParamSchema.parse(params);
+  const { folderId } = AppWithFolderParamSchema.parse(params);
 
-  const folder = await getFolder(request, folderId);
-
-  const files = await getFiles(request, {
-    folder_id: folder.id,
-  });
+  const [folder, files] = await Promise.all([
+    getFolder(request, folderId),
+    getFiles(request, { folder_id: folderId }),
+  ]);
 
   return typedjson({
     folder,
@@ -34,7 +32,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function Page() {
   const { folder, files } = useTypedLoaderData<typeof loader>();
-  const app = useApp();
   const [layout, setLayout] = useState<"list" | "grid">("grid");
 
   return (

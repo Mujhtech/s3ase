@@ -1,11 +1,8 @@
-import React, { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useDropzone } from "react-dropzone-esm";
+import { AnimatePresence,motion } from "framer-motion";
 import { CloudUpload } from "lucide-react";
-import { useFetcher } from "@remix-run/react";
-import { useApp } from "~/hooks/use-apps";
-import { useAuthToken, useBackendUrl } from "~/hooks/use-user";
-import * as tus from "tus-js-client";
+import React,{ useCallback,useState } from "react";
+import { useDropzone } from "react-dropzone-esm";
+import { useUploadManager } from "./upload-manager";
 
 export default function DragAndDropArea({
   children,
@@ -14,74 +11,23 @@ export default function DragAndDropArea({
   children: React.ReactNode;
   folderId?: string;
 }) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
-  const fetcher = useFetcher();
-  const { slug, id } = useApp();
-  const backendUrl = useBackendUrl();
-  const accessToken = useAuthToken();
+  const { startUpload } = useUploadManager();
 
-  const uploadeFile = useCallback(
-    async (file: File) => {
-      let headers = {
-        "Content-Type": "application/offset+octet-stream",
-        Authorization: `Bearer ${accessToken}`,
-        "x-app-id": id,
-      };
-
-      const url = `${backendUrl}/ui/files?name=${file.name}&folder_id=${
-        folderId ?? ""
-      }&intent=create&type=file`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: headers,
-        body: file,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      return data;
-
-      // const upload = new tus.Upload(file, {
-      //   // Replace this with tusd's upload creation URL
-      //   endpoint: url,
-      //   headers: headers,
-
-      //   onError: function (error) {
-      //     console.log("Failed because: " + error);
-      //   },
-      //   onSuccess: function () {
-      //     //console.log("Download %s from %s", upload.file.name, upload.url);
-      //   },
-      // });
-
-      // upload.start();
-    },
-    [accessToken, backendUrl]
-  );
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      uploadeFile(acceptedFiles[0])
-        .then((data) => {
-          console.log(data);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+  const onDrop = useCallback(
+  (acceptedFiles: File[]) => {
+    for (const file of acceptedFiles) {
+    void startUpload(file, folderId).catch((error: unknown) => {
+      console.error("File upload failed", error);
+    });
     }
-  }, []);
+  },
+  [folderId, startUpload]
+  );
 
   const {
     getRootProps,
     getInputProps,
-    isDragActive: dropzoneIsDragActive,
   } = useDropzone({
     onDrop,
     onDragEnter: () => setIsDragActive(true),

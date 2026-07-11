@@ -39,13 +39,15 @@ func TestFindFolderService_Run(t *testing.T) {
 				folderRepo.EXPECT().
 					FindFolderByID(gomock.Any(), "folder-id").
 					Return(&models.Folder{
-						ID:   "folder-id",
-						Name: "Test Folder",
+						ID:    "folder-id",
+						AppID: "app-id",
+						Name:  "Test Folder",
 					}, nil)
 			},
 			want: &models.Folder{
-				ID:   "folder-id",
-				Name: "Test Folder",
+				ID:    "folder-id",
+				AppID: "app-id",
+				Name:  "Test Folder",
 			},
 			wantErr: nil,
 		},

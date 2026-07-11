@@ -28,18 +28,20 @@ const (
 )
 
 type Config struct {
-	EncryptionKey string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
-	Database      Database `json:"database"`
-	Redis         Redis    `json:"redis"`
-	Aws           Aws      `json:"aws"`
-	Server        Server   `json:"server"`
-	Auth          Auth     `json:"auth"`
-	Email         Email    `json:"email"`
-	Job           Job      `json:"job"`
-	Pubsub        Pubsub   `json:"pubsub"`
-	Protocol      Protocol `json:"protocol"`
-	Cors          Cors     `json:"cors"`
-	Cache         Cache    `json:"cache"`
+	Environment       string   `json:"environment" envconfig:"NODE_ENV"`
+	EncryptionKey     string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
+	DomainCnameTarget string   `json:"domain_cname_target" envconfig:"DOMAIN_CNAME_TARGET"`
+	Database          Database `json:"database"`
+	Redis             Redis    `json:"redis"`
+	Aws               Aws      `json:"aws"`
+	Server            Server   `json:"server"`
+	Auth              Auth     `json:"auth"`
+	Email             Email    `json:"email"`
+	Job               Job      `json:"job"`
+	Pubsub            Pubsub   `json:"pubsub"`
+	Protocol          Protocol `json:"protocol"`
+	Cors              Cors     `json:"cors"`
+	Cache             Cache    `json:"cache"`
 }
 
 type Cache struct {
@@ -72,6 +74,8 @@ type Aws struct {
 	DefaultRegion string `json:"region" envconfig:"AWS_DEFAULT_REGION"`
 	AccessKey     string `json:"access_key" envconfig:"AWS_ACCESS_KEY"`
 	SecretKey     string `json:"secret_key" envconfig:"AWS_SECRET_KEY"`
+	Endpoint      string `json:"endpoint" envconfig:"AWS_ENDPOINT"`
+	UsePathStyle  bool   `json:"use_path_style" envconfig:"AWS_USE_PATH_STYLE"`
 }
 
 // Server defines server configuration

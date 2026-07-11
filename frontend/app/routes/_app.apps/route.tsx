@@ -1,23 +1,23 @@
 import { parseWithZod } from "@conform-to/zod";
-import { ActionFunction, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Form, Link } from "@remix-run/react";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
+import { ActionFunction,json,LoaderFunctionArgs } from "@remix-run/node";
+import { Form } from "@remix-run/react";
+import { redirect,typedjson,useTypedLoaderData } from "remix-typedjson";
 import AnimatedLogo from "~/components/animated-logo";
 import CreateAppDialog from "~/components/app/create-app-dialog";
 import UserMenu from "~/components/layout/user-menu";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Card,CardContent,CardHeader } from "~/components/ui/card";
 import Paragraph from "~/components/ui/paragraph";
 import { useUser } from "~/hooks/use-user";
 import { appPath } from "~/lib/path";
 import { CreateAppFormSchema } from "~/models/app";
 import {
-  commitSession,
-  createApp,
-  getApps,
-  setAppSession,
+commitSession,
+createApp,
+getApps,
+setAppSession,
 } from "~/services/app.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: CreateAppFormSchema });
 
@@ -30,7 +30,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const session = await setAppSession(request, app.data.id);
 
-    let headers = new Headers({ "Set-Cookie": await commitSession(session) });
+    const headers = new Headers({ "Set-Cookie": await commitSession(session) });
 
     return redirect(appPath(app.data.slug), {
       headers,

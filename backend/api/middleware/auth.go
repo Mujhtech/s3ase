@@ -11,9 +11,9 @@ import (
 	"github.com/mujhtech/s3ase/internal/pkg/response"
 )
 
-const (
-	authSessionKey key = iota
-)
+type authSessionContextKey struct{}
+
+var authSessionKey authSessionContextKey
 
 func RequiredUserAuth(cfg *config.Config, store *store.Store, cache cache.Cache) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

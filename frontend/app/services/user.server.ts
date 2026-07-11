@@ -1,7 +1,6 @@
-import { User, UserSchema } from "~/models/user";
+import { GetUserSchema } from "~/models/user";
 import { api } from "./api.server";
-import { getAuthSession, logout } from "./auth.server";
-import { redirect } from "remix-typedjson";
+import { getAuthSession,logout } from "./auth.server";
 
 export async function getUser(request: Request) {
   const session = await getAuthSession(request);
@@ -12,17 +11,17 @@ export async function getUser(request: Request) {
     return null;
   }
 
-  const user = await api.get<User>({
+  const response = await api.get({
     request,
     path: "/ui/user",
-    schema: UserSchema,
+    schema: GetUserSchema,
   });
 
-  if (user) {
-    return user;
+  if (response.data) {
+    return response.data;
   }
 
-  throw await logout(request);
+  throw await logout();
 }
 
 export async function requireUser(request: Request) {
@@ -32,5 +31,5 @@ export async function requireUser(request: Request) {
     return user;
   }
 
-  throw await logout(request);
+  throw await logout();
 }

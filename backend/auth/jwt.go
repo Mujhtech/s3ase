@@ -70,6 +70,9 @@ func (j JWTAuth) UserAuthenticate(r *http.Request) (*UserSession, error) {
 	var user *models.User
 	claims := &Claims{}
 	parsed, err := gojwt.ParseWithClaims(creds.Token, claims, func(token_ *gojwt.Token) (interface{}, error) {
+		if _, ok := token_.Method.(*gojwt.SigningMethodHMAC); !ok || token_.Method.Alg() != gojwt.SigningMethodHS256.Alg() {
+			return nil, errors.New("invalid signing method for JWT")
+		}
 
 		if user, err = j.userRepo.FindUserByID(ctx, claims.Value); err != nil {
 			return nil, fmt.Errorf("failed to get user: %w", err)

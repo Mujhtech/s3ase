@@ -1,13 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Link, Outlet, useLocation } from "@remix-run/react";
-import React from "react";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { cn } from "~/lib/utils";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import { usageMenuPath, usagesMenuPath } from "~/lib/path";
+import { Outlet } from "@remix-run/react";
+import { typedjson,useTypedLoaderData } from "remix-typedjson";
+import { usageMenuPath,usagesMenuPath } from "~/lib/path";
 import { SettingMenuNavItem } from "../_app.app.$appSlug.setting/route";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   const { appSlug } = AppSlugParamSchema.parse(params);
 
   return typedjson({

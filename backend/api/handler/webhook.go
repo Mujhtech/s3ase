@@ -43,7 +43,7 @@ func (h *Handler) GetWebhooks(w http.ResponseWriter, r *http.Request) {
 	webhooks, err := findWebhooksService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -68,16 +68,17 @@ func (h *Handler) CreateWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createWebhookService := services.CreateWebhookService{
-		App:         app,
-		WebhookRepo: h.store.WebhookRepo,
-		User:        session.User,
-		Body:        dst,
+		App:           app,
+		AppMemberRepo: h.store.AppMemberRepo,
+		WebhookRepo:   h.store.WebhookRepo,
+		User:          session.User,
+		Body:          dst,
 	}
 
 	webhook, err := createWebhookService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -109,15 +110,16 @@ func (h *Handler) UpdateWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateWebhookService := services.UpdateWebhookService{
-		App:         app,
-		WebhookId:   webhookId,
-		WebhookRepo: h.store.WebhookRepo,
-		User:        session.User,
-		Body:        dst,
+		App:           app,
+		WebhookId:     webhookId,
+		AppMemberRepo: h.store.AppMemberRepo,
+		WebhookRepo:   h.store.WebhookRepo,
+		User:          session.User,
+		Body:          dst,
 	}
 
 	if err = updateWebhookService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -142,14 +144,15 @@ func (h *Handler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deleteWebhookService := services.DeleteWebhookService{
-		App:         app,
-		WebhookId:   webhookId,
-		WebhookRepo: h.store.WebhookRepo,
-		User:        session.User,
+		App:           app,
+		WebhookId:     webhookId,
+		AppMemberRepo: h.store.AppMemberRepo,
+		WebhookRepo:   h.store.WebhookRepo,
+		User:          session.User,
 	}
 
 	if err = deleteWebhookService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 

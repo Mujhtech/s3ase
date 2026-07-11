@@ -1,27 +1,25 @@
-import React from "react";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableHeader,
-  TableHead,
-} from "~/components/ui/table";
-import { ActionFunction, json, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
-import { useApp } from "~/hooks/use-apps";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import {
-  createWebhook,
-  deleteWebhook,
-  getWebhooks,
-  updateWebhook,
-} from "~/services/webhook.server";
-import CreateWebhookDialog from "~/components/webhook/create-webhook-dialog";
 import { parseWithZod } from "@conform-to/zod";
-import { CreateWebhookFormSchema } from "~/models/webhook";
+import { ActionFunction,json,LoaderFunctionArgs } from "@remix-run/node";
+import { redirect,typedjson,useTypedLoaderData } from "remix-typedjson";
+import { Card,CardContent } from "~/components/ui/card";
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from "~/components/ui/table";
+import CreateWebhookDialog from "~/components/webhook/create-webhook-dialog";
 import { webhooksPath } from "~/lib/path";
+import { CreateWebhookFormSchema } from "~/models/webhook";
+import {
+createWebhook,
+deleteWebhook,
+getWebhooks,
+updateWebhook,
+} from "~/services/webhook.server";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 
 export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
@@ -49,13 +47,13 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     return redirect(webhooksPath(appSlug), {});
-  } catch (e) {
-    return json(submission.reply());
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Unable to save webhook" });
   }
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { appSlug } = AppSlugParamSchema.parse(params);
+  AppSlugParamSchema.parse(params);
 
   const webhooks = await getWebhooks(request);
 
@@ -66,7 +64,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function Page() {
   const { webhooks } = useTypedLoaderData<typeof loader>();
-  const app = useApp();
 
   return (
     <div className="flex flex-col">

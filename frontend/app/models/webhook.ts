@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 
 export const WebhookSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable().transform((value) => value ?? ""),
   url: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
+  metadata: z.object({ events: z.array(z.string()).default([]) }).default({ events: [] }),
 });
 
 export type Webhook = z.infer<typeof WebhookSchema>;

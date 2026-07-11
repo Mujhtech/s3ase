@@ -42,13 +42,16 @@ func TestUpdateWebhookService_Run(t *testing.T) {
 				},
 			},
 			mockFn: func(s *UpdateWebhookService) {
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 				webhookRepo, _ := s.WebhookRepo.(*mocks.MockWebhookRepository)
 				webhookRepo.EXPECT().
 					FindWebhookByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.Webhook{ID: "webhook-id"}, nil)
+					Return(&models.Webhook{ID: "webhook-id", AppID: "app-id"}, nil)
 				webhookRepo.EXPECT().
-					CreateWebhook(gomock.Any(), gomock.Any()).
+					UpdateWebhook(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(nil)
 			},
@@ -66,6 +69,9 @@ func TestUpdateWebhookService_Run(t *testing.T) {
 				},
 			},
 			mockFn: func(s *UpdateWebhookService) {
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 				webhookRepo, _ := s.WebhookRepo.(*mocks.MockWebhookRepository)
 				webhookRepo.EXPECT().
 					FindWebhookByID(gomock.Any(), gomock.Any()).
@@ -82,11 +88,12 @@ func TestUpdateWebhookService_Run(t *testing.T) {
 			defer ctrl.Finish()
 
 			service := &UpdateWebhookService{
-				App:         tt.args.app,
-				WebhookRepo: mocks.NewMockWebhookRepository(ctrl),
-				User:        tt.args.user,
-				WebhookId:   tt.args.webhookId,
-				Body:        tt.args.body,
+				App:           tt.args.app,
+				AppMemberRepo: mocks.NewMockAppMemberRepository(ctrl),
+				WebhookRepo:   mocks.NewMockWebhookRepository(ctrl),
+				User:          tt.args.user,
+				WebhookId:     tt.args.webhookId,
+				Body:          tt.args.body,
 			}
 
 			if tt.mockFn != nil {

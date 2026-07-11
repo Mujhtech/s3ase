@@ -1,68 +1,52 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { useFetcher, useLocation, useNavigation } from "@remix-run/react";
-import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import { Textarea } from "~/components/ui/textarea";
-import FormField from "~/components/ui/form-field";
-import Paragraph from "~/components/ui/paragraph";
-import { useState } from "react";
-import { useForm, useInputControl } from "@conform-to/react";
+import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import FormError from "~/components/ui/form-error";
-import { ApiKey, CreateApiKeyFormSchema } from "~/models/api_key";
+import { useFetcher } from "@remix-run/react";
+import { CircleEllipsis,Copy } from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
+Dialog,
+DialogContent,
+DialogTitle,
+DialogTrigger,
+} from "~/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
-import { Check, ChevronsUpDown, CircleEllipsis } from "lucide-react";
-import { cn } from "~/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import FormError from "~/components/ui/form-error";
+import FormField from "~/components/ui/form-field";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "~/components/ui/select";
+import { Textarea } from "~/components/ui/textarea";
+import { cn } from "~/lib/utils";
+import { ApiKey,CreateApiKeyFormSchema } from "~/models/api_key";
 
 const accesses = ["full", "read", "write"];
 
 export default function CreateApiKeyDialog({
   apiKey,
-  onDialogOpen,
 }: {
   apiKey?: ApiKey;
-  onDialogOpen?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [access, setAccess] = useState<string | undefined>(
     apiKey?.access ?? "read"
   );
+  const [copied, setCopied] = useState(false);
 
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ secret?: string; error?: string }>();
+  const createdSecret = fetcher.data?.secret;
 
   const [form, fields] = useForm({
     id: apiKey ? "update-api-key-form" : "create-api-key-form",
@@ -102,8 +86,16 @@ export default function CreateApiKeyDialog({
                 </div>
               </DialogTrigger>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <DropdownMenuLabel>Remove</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+        <fetcher.Form method="post">
+        <input type="hidden" name="id" value={apiKey.id} />
+        <input type="hidden" name="name" value={apiKey.name} />
+        <input type="hidden" name="description" value={apiKey.description} />
+        <input type="hidden" name="access" value={apiKey.access} />
+        <button type="submit" name="intent" value="delete" className="w-full text-left">
+          Remove
+        </button>
+        </fetcher.Form>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -117,6 +109,27 @@ export default function CreateApiKeyDialog({
         aria-describedby={title}
         //onClick={(e) => e.stopPropagation()}
       >
+    {createdSecret ? (
+      <div className="grid gap-3">
+      <p className="text-sm text-muted-foreground">
+        Copy this key now. It will not be shown again.
+      </p>
+      <div className="flex gap-2">
+        <Input value={createdSecret} readOnly aria-label="New API key" />
+        <Button
+        type="button"
+        variant="outline"
+        onClick={async () => {
+          await navigator.clipboard.writeText(createdSecret);
+          setCopied(true);
+        }}
+        >
+        <Copy className="h-4 w-4" /> {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <Button type="button" onClick={() => setIsOpen(false)}>Done</Button>
+      </div>
+    ) : (
         <fetcher.Form
           method="post"
           className="grid grid-cols-1 gap-3"
@@ -143,6 +156,7 @@ export default function CreateApiKeyDialog({
             />
             <FormError>{fields.name.errors}</FormError>
           </FormField>
+      {fetcher.data?.error && <FormError>{fetcher.data.error}</FormError>}
 
           <FormField>
             <Label>Description (Optional)</Label>
@@ -202,6 +216,7 @@ export default function CreateApiKeyDialog({
             </Button>
           </div>
         </fetcher.Form>
+    )}
       </DialogContent>
     </Dialog>
   );

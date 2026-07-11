@@ -1,17 +1,17 @@
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { User } from "~/models/user";
 import { Link } from "@remix-run/react";
-import { appsPath, logoutPath } from "~/lib/path";
+import { Avatar,AvatarFallback,AvatarImage } from "~/components/ui/avatar";
+import { appsPath,logoutPath } from "~/lib/path";
 import { cn } from "~/lib/utils";
+import { User } from "~/models/user";
 
 export default function UserMenu({
   user,

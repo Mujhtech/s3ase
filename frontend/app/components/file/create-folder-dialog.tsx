@@ -1,54 +1,27 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { useFetcher, useLocation, useNavigation } from "@remix-run/react";
-import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import { Textarea } from "~/components/ui/textarea";
-import FormField from "~/components/ui/form-field";
-import Paragraph from "~/components/ui/paragraph";
-import { useState } from "react";
-import { useForm, useInputControl } from "@conform-to/react";
+import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
+import { useFetcher } from "@remix-run/react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import {
+Dialog,
+DialogContent,
+DialogTitle,
+DialogTrigger,
+} from "~/components/ui/dialog";
 import FormError from "~/components/ui/form-error";
-import { Folder, CreateFolderFormSchema } from "~/models/folder";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
-import { Check, ChevronsUpDown, CircleEllipsis } from "lucide-react";
-import { cn } from "~/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+import FormField from "~/components/ui/form-field";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
+import { CreateFolderFormSchema,Folder } from "~/models/folder";
 
 export default function CreateFolderDialog({
   folder,
-  onDialogOpen,
 }: {
   folder?: Folder;
-  onDialogOpen?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const title = folder ? "Update" : "Create" + " Folder";
 

@@ -10,18 +10,25 @@ import (
 )
 
 type UpdateApiKeyService struct {
-	ApiKeyId   string
-	App        *models.App
-	ApiKeyRepo store.ApiKeyRepository
-	User       *models.User
-	Body       *dto.CreateApiKeyRequestDto
+	ApiKeyId      string
+	App           *models.App
+	AppMemberRepo store.AppMemberRepository
+	ApiKeyRepo    store.ApiKeyRepository
+	User          *models.User
+	Body          *dto.CreateApiKeyRequestDto
 }
 
 func (c *UpdateApiKeyService) Run(ctx context.Context) error {
+	if err := requireAppOwner(ctx, c.AppMemberRepo, c.App.ID, c.User.ID); err != nil {
+		return err
+	}
 
 	apiKey, err := c.ApiKeyRepo.FindApiKeyByID(ctx, c.ApiKeyId)
 
 	if err != nil {
+		return err
+	}
+	if err := requireSameApp(c.App.ID, apiKey.AppID); err != nil {
 		return err
 	}
 

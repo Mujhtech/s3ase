@@ -8,7 +8,9 @@ const (
 	EventTypeUploadStarted   EventType = "upload_started"
 	EventTypeUploadProgress  EventType = "upload_progress"
 	EventTypeUploadCompleted EventType = "upload_completed"
+	EventTypeUploadFailed    EventType = "upload_failed"
 	EventTypeUploadCancelled EventType = "upload_cancelled"
+	EventTypeUploadDeleted   EventType = "upload_deleted"
 )
 
 type UploadProgressStatus string

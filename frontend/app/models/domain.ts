@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 
 export const DomainSchema = z.object({
   id: z.string(),

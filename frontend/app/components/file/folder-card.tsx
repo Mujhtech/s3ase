@@ -1,14 +1,13 @@
-import React from "react";
-import { Folder } from "~/models/folder";
+import { Link } from "@remix-run/react";
 import { Folder as FolderIcon } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { Link } from "@remix-run/react";
 import { folderPath } from "~/lib/path";
+import { Folder } from "~/models/folder";
 
 export default function FolderCard({
   folder,
