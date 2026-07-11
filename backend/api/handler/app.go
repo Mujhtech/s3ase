@@ -6,6 +6,7 @@ import (
 
 	"github.com/mujhtech/s3ase/api/dto"
 	"github.com/mujhtech/s3ase/api/middleware"
+	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/internal/pkg/request"
 	"github.com/mujhtech/s3ase/internal/pkg/response"
 	"github.com/mujhtech/s3ase/services"
@@ -68,7 +69,8 @@ func (h *Handler) CreateApp(w http.ResponseWriter, r *http.Request) {
 
 	createAppService := services.CreateAppService{
 		Body:                dst,
-		DefaultRegion:       h.cfg.Aws.DefaultRegion,
+		DefaultRegion:       h.cfg.ObjectStorageRegion(),
+		ForceDefaultRegion:  h.cfg.ObjectStorage.Provider == config.ObjectStorageProviderR2,
 		AppRepo:             h.store.AppRepo,
 		AppMemberRepo:       h.store.AppMemberRepo,
 		AppSubscriptionRepo: h.store.AppSubscriptionRepo,

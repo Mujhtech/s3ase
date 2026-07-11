@@ -139,8 +139,40 @@ func TestSlugifyProducesS3SafeName(t *testing.T) {
 	require.Equal(t, "a-b-c", slugify("A---B___C"))
 }
 
+func TestCreateAppServiceForcesConfiguredStorageRegion(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	appRepo := mocks.NewMockAppRepository(ctrl)
+	memberRepo := mocks.NewMockAppMemberRepository(ctrl)
+	buckets := &recordingBucketStore{}
+	appRepo.EXPECT().CreateApp(gomock.Any(), gomock.Any()).Return(nil)
+	memberRepo.EXPECT().CreateAppMember(gomock.Any(), gomock.Any()).Return(nil)
+
+	app, err := (&CreateAppService{
+		Body:               &dto.CreateAppRequestDto{Name: "R2 App", Region: "eu-west-2"},
+		DefaultRegion:      "auto",
+		ForceDefaultRegion: true,
+		AppRepo:            appRepo,
+		AppMemberRepo:      memberRepo,
+		User:               &models.User{ID: "owner-id"},
+		S3:                 buckets,
+	}).Run(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, "auto", buckets.region)
+	require.Equal(t, "auto", app.Region.String)
+}
+
 type successfulBucketStore struct{}
 
 func (successfulBucketStore) CheckOrCreateNewBucket(context.Context, string, string) (string, error) {
 	return "", nil
+}
+
+type recordingBucketStore struct {
+	region string
+}
+
+func (s *recordingBucketStore) CheckOrCreateNewBucket(_ context.Context, _ string, region string) (string, error) {
+	s.region = region
+	return region, nil
 }

@@ -2,10 +2,13 @@ package config
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
+
+var r2AccountIDPattern = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 
 var DefaultConfig = &Config{
 	Environment:       "development",
@@ -13,6 +16,9 @@ var DefaultConfig = &Config{
 	DomainCnameTarget: "files.s3ase.dev",
 	Cache: Cache{
 		Provider: CacheProviderRedis,
+	},
+	ObjectStorage: ObjectStorage{
+		Provider: ObjectStorageProviderS3,
 	},
 	Cors: Cors{
 		AllowedOrigins:   []string{"http://localhost:3000"},
@@ -118,8 +124,23 @@ func (c *Config) validate() error {
 	if (c.Auth.GoogleAuth.ClientID == "") != (c.Auth.GoogleAuth.ClientSecret == "") {
 		return fmt.Errorf("google auth client id and secret must be configured together")
 	}
-	if (c.Aws.AccessKey == "") != (c.Aws.SecretKey == "") {
-		return fmt.Errorf("aws access key and secret key must be configured together")
+	switch c.ObjectStorage.Provider {
+	case ObjectStorageProviderS3:
+		if (c.Aws.AccessKey == "") != (c.Aws.SecretKey == "") {
+			return fmt.Errorf("aws access key and secret key must be configured together")
+		}
+	case ObjectStorageProviderR2:
+		if !r2AccountIDPattern.MatchString(c.R2.AccountID) {
+			return fmt.Errorf("r2 account id must contain only letters and numbers")
+		}
+		if c.R2.AccessKeyID == "" || c.R2.SecretKey == "" {
+			return fmt.Errorf("r2 access key id and secret access key are required")
+		}
+		if c.R2.Jurisdiction != "" && c.R2.Jurisdiction != "eu" && c.R2.Jurisdiction != "fedramp" {
+			return fmt.Errorf("r2 jurisdiction must be empty, eu, or fedramp")
+		}
+	default:
+		return fmt.Errorf("object storage provider must be s3 or r2")
 	}
 
 	// Validate database configuration

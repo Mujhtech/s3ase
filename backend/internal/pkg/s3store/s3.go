@@ -16,43 +16,111 @@ import (
 type Options func(*S3Store)
 
 type S3Store struct {
-	bucket string
-	client *s3.Client
-	cfg    *config.Config
+	bucket   string
+	client   *s3.Client
+	cfg      *config.Config
+	provider config.ObjectStorageProvider
+	region   string
 }
 
 func NewS3Store(cfg *config.Config, opts ...Options) (*S3Store, error) {
-	config, err := awsConfig.LoadDefaultConfig(
+	storage, err := resolveStorageConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkConfig, err := awsConfig.LoadDefaultConfig(
 		context.Background(),
 		awsConfig.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(
-				cfg.Aws.AccessKey,
-				cfg.Aws.SecretKey,
+				storage.accessKey,
+				storage.secretKey,
 				"",
 			),
 		),
-		awsConfig.WithRegion(cfg.Aws.DefaultRegion),
+		awsConfig.WithRegion(storage.region),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &S3Store{
-		client: s3.NewFromConfig(config, func(o *s3.Options) {
+	store := &S3Store{
+		client: s3.NewFromConfig(sdkConfig, func(o *s3.Options) {
 			o.UseAccelerate = false
 
 			// Disable HTTPS and only use HTTP (helpful for debugging requests).
 			o.EndpointOptions.DisableHTTPS = false
 
-			if cfg.Aws.Endpoint != "" {
-				o.BaseEndpoint = &cfg.Aws.Endpoint
+			if storage.endpoint != "" {
+				o.BaseEndpoint = &storage.endpoint
 			}
-			o.UsePathStyle = cfg.Aws.UsePathStyle
-			o.Region = cfg.Aws.DefaultRegion
+			o.UsePathStyle = storage.usePathStyle
+			o.Region = storage.region
 		}),
-		cfg: cfg,
-	}, nil
+		cfg:      cfg,
+		provider: storage.provider,
+		region:   storage.region,
+	}
+	for _, opt := range opts {
+		opt(store)
+	}
+
+	return store, nil
+}
+
+type storageConfig struct {
+	provider     config.ObjectStorageProvider
+	region       string
+	endpoint     string
+	accessKey    string
+	secretKey    string
+	usePathStyle bool
+}
+
+func resolveStorageConfig(cfg *config.Config) (storageConfig, error) {
+	if cfg == nil {
+		return storageConfig{}, fmt.Errorf("config is required")
+	}
+
+	switch cfg.ObjectStorage.Provider {
+	case config.ObjectStorageProviderR2:
+		jurisdiction := ""
+		if cfg.R2.Jurisdiction != "" {
+			jurisdiction = cfg.R2.Jurisdiction + "."
+		}
+		return storageConfig{
+			provider:  config.ObjectStorageProviderR2,
+			region:    "auto",
+			endpoint:  fmt.Sprintf("https://%s.%sr2.cloudflarestorage.com", cfg.R2.AccountID, jurisdiction),
+			accessKey: cfg.R2.AccessKeyID,
+			secretKey: cfg.R2.SecretKey,
+		}, nil
+	case "", config.ObjectStorageProviderS3:
+		return storageConfig{
+			provider:     config.ObjectStorageProviderS3,
+			region:       cfg.Aws.DefaultRegion,
+			endpoint:     cfg.Aws.Endpoint,
+			accessKey:    cfg.Aws.AccessKey,
+			secretKey:    cfg.Aws.SecretKey,
+			usePathStyle: cfg.Aws.UsePathStyle,
+		}, nil
+	default:
+		return storageConfig{}, fmt.Errorf("unsupported object storage provider %q", cfg.ObjectStorage.Provider)
+	}
+}
+
+func (s *S3Store) requestRegion(region string) string {
+	if s.provider == config.ObjectStorageProviderR2 || region == "" {
+		return s.region
+	}
+	return region
+}
+
+func (s *S3Store) withRegion(region string) func(*s3.Options) {
+	return func(options *s3.Options) {
+		options.Region = s.requestRegion(region)
+	}
 }
 
 func (s *S3Store) GetClient() *s3.Client {
@@ -66,11 +134,7 @@ func (s *S3Store) OpenFile(ctx context.Context, bucket, key, region string) (*s3
 	return s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &key,
-	}, func(options *s3.Options) {
-		if region != "" {
-			options.Region = region
-		}
-	})
+	}, s.withRegion(region))
 }
 
 func (s *S3Store) DeleteFile(ctx context.Context, bucket, key, region string) error {
@@ -81,11 +145,7 @@ func (s *S3Store) DeleteFile(ctx context.Context, bucket, key, region string) er
 		_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 			Bucket: &bucket,
 			Key:    &objectKey,
-		}, func(options *s3.Options) {
-			if region != "" {
-				options.Region = region
-			}
-		})
+		}, s.withRegion(region))
 		return err
 	}
 	if err := deleteObject(key); err != nil {
@@ -103,11 +163,7 @@ func (s *S3Store) DeleteBucket(ctx context.Context, bucket, region string) error
 	if bucket == "" {
 		return fmt.Errorf("bucket is required")
 	}
-	opts := func(options *s3.Options) {
-		if region != "" {
-			options.Region = region
-		}
-	}
+	opts := s.withRegion(region)
 	var continuationToken *string
 	for {
 		result, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
@@ -167,11 +223,9 @@ func (s *S3Store) ListBuckets(ctx context.Context) ([]string, error) {
 }
 
 func (s *S3Store) CheckOrCreateNewBucket(ctx context.Context, bucket string, region string) (string, error) {
-
+	region = s.requestRegion(region)
 	opts := []func(*s3.Options){
-		func(o *s3.Options) {
-			o.Region = region
-		},
+		s.withRegion(region),
 	}
 
 	existBucket, err := s.client.HeadBucket(ctx, &s3.HeadBucketInput{
@@ -179,16 +233,9 @@ func (s *S3Store) CheckOrCreateNewBucket(ctx context.Context, bucket string, reg
 	}, opts...)
 
 	if err != nil || existBucket == nil {
-		input := &s3.CreateBucketInput{Bucket: &bucket}
-		if region != "" && region != "us-east-1" {
-			input.CreateBucketConfiguration = &awsType.CreateBucketConfiguration{
-				LocationConstraint: awsType.BucketLocationConstraint(region),
-			}
-		}
+		input := s.createBucketInput(bucket, region)
 
-		_, err := s.client.CreateBucket(ctx, input, func(o *s3.Options) {
-			o.Region = region
-		})
+		_, err := s.client.CreateBucket(ctx, input, s.withRegion(region))
 
 		if err != nil {
 			return "", err
@@ -207,6 +254,16 @@ func (s *S3Store) CheckOrCreateNewBucket(ctx context.Context, bucket string, reg
 		return *existBucket.BucketRegion, nil
 	}
 	return region, nil
+}
+
+func (s *S3Store) createBucketInput(bucket, region string) *s3.CreateBucketInput {
+	input := &s3.CreateBucketInput{Bucket: &bucket}
+	if s.provider != config.ObjectStorageProviderR2 && region != "" && region != "us-east-1" {
+		input.CreateBucketConfiguration = &awsType.CreateBucketConfiguration{
+			LocationConstraint: awsType.BucketLocationConstraint(region),
+		}
+	}
+	return input
 }
 
 func (s *S3Store) SetBucketDefaultPolicy(ctx context.Context, bucket string) error {

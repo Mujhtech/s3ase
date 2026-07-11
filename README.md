@@ -34,7 +34,7 @@ docker compose -f docker-compose.dev.yml down
 
 ## Run locally
 
-You need Go 1.23+, Node.js 20+, pnpm 9, PostgreSQL, Redis, and S3-compatible storage.
+You need Go 1.26.5+, Node.js 20+, pnpm 9, PostgreSQL, Redis, and S3-compatible storage.
 
 ```bash
 cd backend
@@ -52,6 +52,25 @@ pnpm dev
 ```
 
 The backend reads configuration from environment variables. Important production settings include a unique 32-byte `ENCRYPTION_KEY`, database and Redis connection values, S3 credentials, OAuth credentials, allowed CORS origins, and `DOMAIN_CNAME_TARGET`.
+
+## Object storage
+
+AWS S3 and S3-compatible services such as MinIO remain the default. Configure them with `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, `AWS_DEFAULT_REGION`, and optionally `AWS_ENDPOINT` and `AWS_USE_PATH_STYLE`.
+
+To use Cloudflare R2 instead, create an R2 API token with Admin Read & Write permission because S3ase creates and deletes an app bucket as part of the existing app lifecycle. Then configure:
+
+```dotenv
+OBJECT_STORAGE_PROVIDER=r2
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+# Optional; supported values are eu and fedramp.
+R2_JURISDICTION=
+```
+
+S3ase derives the correct R2 endpoint and uses R2's required `auto` region. The dashboard, direct uploads, and resumable tus uploads use the same UI and API paths for either provider.
+
+The provider setting applies to the whole deployment. Changing it does not migrate objects that already exist in another storage provider.
 
 ## API keys
 
