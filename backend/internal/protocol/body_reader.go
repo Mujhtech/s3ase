@@ -140,5 +140,7 @@ func (r *bodyReader) closeWithError(err error) {
 		zerolog.Ctx(r.ctx).Warn().Msgf("NetworkTimeoutError error %v", err)
 	}
 
-	r.reader.Close()
+	if closeErr := r.reader.Close(); closeErr != nil {
+		zerolog.Ctx(r.ctx).Warn().Err(closeErr).Msg("failed to close upload request body")
+	}
 }

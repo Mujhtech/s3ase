@@ -6,11 +6,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
+	"strings"
 )
 
-type AesCfb struct {
+const authenticatedCipherPrefix = "gcm:"
+
+type AES struct {
 	block cipher.Block
+	aead  cipher.AEAD
 }
 
 func NewAesCfb(key string) (Encrypt, error) {
@@ -22,39 +25,42 @@ func NewAesCfb(key string) (Encrypt, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AesCfb{block: block}, nil
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	return &AES{block: block, aead: aead}, nil
 }
 
-func (e *AesCfb) Encrypt(plainText []byte) (string, error) {
+func (e *AES) Encrypt(plainText []byte) (string, error) {
 	const maxSize = 64 * 1024 * 1024 // 64 MB
 	if len(plainText) > maxSize {
 		return "", fmt.Errorf("plainText too large")
 	}
 
-	cipherText := make([]byte, aes.BlockSize+len(plainText))
-	iv := cipherText[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	nonce := make([]byte, e.aead.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
 		return "", err
 	}
-
-	encrypter := cipher.NewCFBEncrypter(e.block, iv)
-	encrypter.XORKeyStream(cipherText[aes.BlockSize:], []byte(plainText))
-
-	return base64.StdEncoding.EncodeToString(cipherText), nil
+	cipherText := e.aead.Seal(nonce, nonce, plainText, nil)
+	return authenticatedCipherPrefix + base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
-func (e *AesCfb) Decrypt(cipherText string) (string, error) {
-
-	cipherTextBytes, err := base64.StdEncoding.DecodeString(cipherText)
+func (e *AES) Decrypt(cipherText string) (string, error) {
+	if !strings.HasPrefix(cipherText, authenticatedCipherPrefix) {
+		return e.decryptLegacyCFB(cipherText)
+	}
+	cipherTextBytes, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(cipherText, authenticatedCipherPrefix))
 	if err != nil {
 		return "", err
 	}
-
-	iv := cipherTextBytes[:aes.BlockSize]
-	cipherTextBytes = cipherTextBytes[aes.BlockSize:]
-
-	decrypter := cipher.NewCFBDecrypter(e.block, iv)
-	decrypter.XORKeyStream(cipherTextBytes, cipherTextBytes)
-
-	return string(cipherTextBytes), nil
+	if len(cipherTextBytes) < e.aead.NonceSize()+e.aead.Overhead() {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+	nonce, encrypted := cipherTextBytes[:e.aead.NonceSize()], cipherTextBytes[e.aead.NonceSize():]
+	plainText, err := e.aead.Open(nil, nonce, encrypted, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to authenticate ciphertext: %w", err)
+	}
+	return string(plainText), nil
 }

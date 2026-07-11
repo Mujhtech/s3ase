@@ -1,7 +1,7 @@
 # ---------------------------------------------------------#
 #                   Build image                            #
 # ---------------------------------------------------------#
-FROM --platform=$BUILDPLATFORM golang:1.23-alpine3.20 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS builder
 RUN apk update && apk add --no-cache build-base musl-dev
 
 WORKDIR /app
@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -ldflags="$LDFLAGS" -o ./s3ase ./cmd
 
 
-FROM alpine:3.20 AS final
+FROM alpine:3.23 AS final
 
 # ---------------------------------------------------------#
 #                  setup app dir and its content           #

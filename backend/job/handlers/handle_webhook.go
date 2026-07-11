@@ -14,6 +14,7 @@ import (
 	"github.com/mujhtech/s3ase/database/store"
 	"github.com/mujhtech/s3ase/internal/pkg/encrypt"
 	"github.com/mujhtech/s3ase/internal/pkg/s3store"
+	"github.com/rs/zerolog"
 )
 
 func HandleWebhook(aesCfb encrypt.Encrypt, store *store.Store, s3 *s3store.S3Store) func(context.Context, *asynq.Task) error {
@@ -99,7 +100,11 @@ func sendWebhookNotification(ctx context.Context, endpoint string, data WebhookP
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			zerolog.Ctx(ctx).Warn().Err(closeErr).Msg("failed to close webhook response body")
+		}
+	}()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return fmt.Errorf("webhook returned HTTP %d", response.StatusCode)
 	}

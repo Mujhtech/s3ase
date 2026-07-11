@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	gojwt "github.com/golang-jwt/jwt"
+	gojwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gotidy/ptr"
 	"github.com/mujhtech/s3ase/cache"
@@ -32,7 +32,7 @@ type JWTAuth struct {
 }
 
 type Claims struct {
-	gojwt.StandardClaims
+	gojwt.RegisteredClaims
 
 	Value string `json:"value,omitempty"`
 
@@ -67,30 +67,18 @@ func (j JWTAuth) UserAuthenticate(r *http.Request) (*UserSession, error) {
 		return nil, errors.New("missing credentials")
 	}
 
-	var user *models.User
-	claims := &Claims{}
-	parsed, err := gojwt.ParseWithClaims(creds.Token, claims, func(token_ *gojwt.Token) (interface{}, error) {
-		if _, ok := token_.Method.(*gojwt.SigningMethodHMAC); !ok || token_.Method.Alg() != gojwt.SigningMethodHS256.Alg() {
-			return nil, errors.New("invalid signing method for JWT")
-		}
-
-		if user, err = j.userRepo.FindUserByID(ctx, claims.Value); err != nil {
-			return nil, fmt.Errorf("failed to get user: %w", err)
-		}
-
-		return []byte(j.cfg.EncryptionKey), nil
-	})
-
+	claims, err := parseTokenClaims(creds.Token, j.cfg.EncryptionKey)
 	if err != nil {
 		return nil, fmt.Errorf("parsing of JWT claims failed: %w", err)
 	}
 
-	if !parsed.Valid {
-		return nil, errors.New("parsed JWT token is invalid")
+	if claims.Value == "" {
+		return nil, errors.New("jwt is missing subject value")
 	}
 
-	if _, ok := parsed.Method.(*gojwt.SigningMethodHMAC); !ok {
-		return nil, errors.New("invalid HMAC signature for JWT")
+	user, err := j.userRepo.FindUserByID(ctx, claims.Value)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	var metadata *TokenMetadata
@@ -109,6 +97,24 @@ func (j JWTAuth) UserAuthenticate(r *http.Request) (*UserSession, error) {
 		Metadata: metadata,
 	}, nil
 
+}
+
+func parseTokenClaims(rawToken, secret string) (*Claims, error) {
+	claims := &Claims{}
+	parsed, err := gojwt.ParseWithClaims(rawToken, claims, func(_ *gojwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	},
+		gojwt.WithValidMethods([]string{gojwt.SigningMethodHS256.Alg()}),
+		gojwt.WithIssuer(issuer),
+		gojwt.WithExpirationRequired(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !parsed.Valid {
+		return nil, errors.New("parsed JWT token is invalid")
+	}
+	return claims, nil
 }
 
 func (j JWTAuth) CreateToken(
@@ -179,16 +185,16 @@ func getCredentials(r *http.Request) (*Credentials, error) {
 }
 
 func generateToken(token *models.Token, secret string) (string, error) {
-	var expiresAt int64
+	var expiresAt *gojwt.NumericDate
 	if token.ExpiredAt != nil {
-		expiresAt = *token.ExpiredAt
+		expiresAt = gojwt.NewNumericDate(time.UnixMilli(*token.ExpiredAt))
 	}
 
 	jwtToken := gojwt.NewWithClaims(gojwt.SigningMethodHS256, Claims{
-		StandardClaims: gojwt.StandardClaims{
+		RegisteredClaims: gojwt.RegisteredClaims{
 			Issuer:    issuer,
-			IssuedAt:  token.IssuedAt / 1000,
-			ExpiresAt: expiresAt / 1000,
+			IssuedAt:  gojwt.NewNumericDate(time.UnixMilli(token.IssuedAt)),
+			ExpiresAt: expiresAt,
 		},
 		Value: token.Value,
 		Token: &SubClaimsToken{

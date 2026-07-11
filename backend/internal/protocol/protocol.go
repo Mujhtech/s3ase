@@ -407,11 +407,13 @@ func (p *Protocol) GetFile(w http.ResponseWriter, r *http.Request) {
 
 	p.sendResp(c, resp)
 	if _, err = io.Copy(w, src); err != nil {
+		_ = src.Close()
 		p.sendError(c, err)
 		return
 	}
-
-	src.Close()
+	if err := src.Close(); err != nil {
+		p.sendError(c, err)
+	}
 }
 
 func extractIDFromPath(path string) (string, error) {

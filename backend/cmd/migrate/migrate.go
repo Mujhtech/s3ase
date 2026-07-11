@@ -109,7 +109,11 @@ func migration(configFile string, migration Migration) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			log.Warn().Err(closeErr).Msg("failed to close migration database connection")
+		}
+	}()
 
 	migrator, err := migrate.Migrator(ctx, cfg, db)
 

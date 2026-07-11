@@ -26,7 +26,9 @@ func NewAMQP(cfg *config.Config) (*AMQP, error) {
 
 	ch, err := conn.Channel()
 	if err != nil {
-		conn.Close()
+		if closeErr := conn.Close(); closeErr != nil {
+			return nil, fmt.Errorf("failed to open channel: %v; failed to close connection: %v", err, closeErr)
+		}
 		return nil, fmt.Errorf("failed to open channel: %v", err)
 	}
 

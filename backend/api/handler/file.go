@@ -19,6 +19,7 @@ import (
 	"github.com/mujhtech/s3ase/job"
 	jobHandlers "github.com/mujhtech/s3ase/job/handlers"
 	"github.com/mujhtech/s3ase/services"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -257,7 +258,12 @@ func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 		_ = response.Error(w, r, err)
 		return
 	}
-	defer object.Body.Close()
+	defer func() {
+		if closeErr := object.Body.Close(); closeErr != nil {
+			zerolog.Ctx(ctx).Warn().Err(closeErr).Str("file_id", file.ID).
+				Msg("failed to close downloaded object body")
+		}
+	}()
 	contentType := file.MimeType
 	if contentType == "" {
 		contentType = "application/octet-stream"
@@ -295,7 +301,8 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 	if err := h.sse.Publish(ctx, app.ID, sse.EventTypeUploadDeleted, sse.UploadProgress{
 		FileID: file.ID, Name: file.Name, Status: sse.UploadProgressStatusCancelled,
 	}); err != nil {
-		// Deletion has already completed; a missed UI event must not turn it into a failed request.
+		zerolog.Ctx(ctx).Warn().Err(err).Str("file_id", file.ID).
+			Msg("file deleted but upload-deleted event could not be published")
 	}
 	if data, marshalErr := json.Marshal(file); marshalErr == nil {
 		if payload, marshalErr := json.Marshal(jobHandlers.WebhookPayload{

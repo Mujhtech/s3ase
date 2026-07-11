@@ -53,8 +53,9 @@ func validateConnection(ctx context.Context, dialer *kafka.Dialer, brokers []str
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-
+	if err := conn.Close(); err != nil {
+		return fmt.Errorf("failed to close Kafka validation connection: %w", err)
+	}
 	return nil
 }
 
@@ -79,16 +80,16 @@ func (a *ApacheKafka) Publish(ctx context.Context, topic string, payload []byte,
 			TLS: &tls.Config{},
 		},
 	}
-	defer writer.Close()
-
 	err := writer.WriteMessages(ctx, kafka.Message{
 		Value: payload,
 	})
-
 	if err != nil {
+		_ = writer.Close()
 		return fmt.Errorf("failed to publish to topic %s: %w", topic, err)
 	}
-
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close Kafka writer for topic %s: %w", topic, err)
+	}
 	return nil
 }
 

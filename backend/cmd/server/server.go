@@ -89,7 +89,11 @@ func startServer(configFile string, logLevel string) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			log.Warn().Err(closeErr).Msg("failed to close server database connection")
+		}
+	}()
 
 	redis, err := redis.NewRedis(cfg)
 
