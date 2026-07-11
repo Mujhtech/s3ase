@@ -48,3 +48,15 @@ func (f PublishOptionFunc) Apply(config *PublishConfig) {
 func formatTopic(app, ns, topic string) string {
 	return app + ":" + ns + ":" + topic
 }
+
+func WithChannelNamespace(value string) SubscribeOption {
+	return SubscribeOptionFunc(func(c *SubscribeConfig) {
+		c.namespace = value
+	})
+}
+
+func WithPublishNamespace(value string) PublishOption {
+	return PublishOptionFunc(func(c *PublishConfig) {
+		c.namespace = value
+	})
+}

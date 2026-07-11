@@ -1,10 +1,10 @@
 import { ServerResponseSchema } from "~/models/default";
-import { api } from "./api.server";
 import {
-  CreateFolderForm,
-  GetFolderSchema,
-  GetFoldersSchema,
+CreateFolderForm,
+GetFolderSchema,
+GetFoldersSchema,
 } from "~/models/folder";
+import { api } from "./api.server";
 
 export async function getFolders(request: Request) {
   const res = await api.get({

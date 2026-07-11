@@ -18,9 +18,7 @@ func NewExecutor(cfg *config.Config, opts asynq.RedisConnOpt) *Executor {
 		opts,
 		asynq.Config{
 			Concurrency: cfg.Job.Concurrency,
-			BaseContext: func() (ctx context.Context) {
-				return ctx
-			},
+			BaseContext: context.Background,
 		},
 	)
 

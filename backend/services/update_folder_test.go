@@ -44,7 +44,7 @@ func TestUpdateFolderService_Run(t *testing.T) {
 				folderRepo.EXPECT().
 					FindFolderByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.Folder{ID: "folder-id"}, nil)
+					Return(&models.Folder{ID: "folder-id", AppID: "app-id"}, nil)
 				folderRepo.EXPECT().
 					UpdateFolder(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -90,7 +90,7 @@ func TestUpdateFolderService_Run(t *testing.T) {
 				folderRepo.EXPECT().
 					FindFolderByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.Folder{ID: "folder-id"}, nil)
+					Return(&models.Folder{ID: "folder-id", AppID: "app-id"}, nil)
 				folderRepo.EXPECT().
 					UpdateFolder(gomock.Any(), gomock.Any()).
 					Times(1).

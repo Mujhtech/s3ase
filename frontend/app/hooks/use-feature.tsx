@@ -1,7 +1,7 @@
 import { UIMatch } from "@remix-run/react";
+import { Feature } from "~/models/feature";
 import { loader } from "~/root";
 import { useTypedMatchesData } from "./use-typed-match";
-import { Feature } from "~/models/feature";
 
 export function useOptionalFeature(matches?: UIMatch[]): Feature | undefined {
   const routeMatch = useTypedMatchesData<typeof loader>({

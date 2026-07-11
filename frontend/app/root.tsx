@@ -1,27 +1,37 @@
+import type { LinksFunction,LoaderFunctionArgs } from "@remix-run/node";
 import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
+Links,
+Meta,
+Outlet,
+Scripts,
+ScrollRestoration,
 } from "@remix-run/react";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
-import "./tailwind.css";
 import { typedjson } from "remix-typedjson";
-import { getUser } from "./services/user.server";
+import { publicBackendUrl } from "./env.server";
+import { getAppIdFromSession } from "./services/app.server";
+import { getAuthTokenFromSession } from "./services/auth.server";
 import { getFeatures } from "./services/feature.server";
+import { getUser } from "./services/user.server";
+import "./tailwind.css";
 
 export const links: LinksFunction = () => [];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const feature = await getFeatures(request);
-
-  const user = await getUser(request);
+  const backendUrl = publicBackendUrl;
+  const [feature, accessToken, appId, user] = await Promise.all([
+    getFeatures(request),
+    getAuthTokenFromSession(request),
+    getAppIdFromSession(request),
+    getUser(request),
+  ]);
 
   return typedjson({
     user: user,
     feature: feature,
+    accessToken: accessToken,
+    appId: appId,
+    backendUrl,
   });
 };
 

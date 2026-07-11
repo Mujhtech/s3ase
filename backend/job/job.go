@@ -39,7 +39,6 @@ func NewJob(cfg *config.Config, redis *redis.Redis) (*Job, error) {
 }
 
 func (j *Job) RegisterAndStart(store *store.Store, s3 *s3store.S3Store) error {
-	j.Executor.RegisterJobHandler(JobNameAppSync, asynq.HandlerFunc(handlers.HandleStoreSync(j.aesCfb, store, s3)))
 	j.Executor.RegisterJobHandler(JobNameWebhook, asynq.HandlerFunc(handlers.HandleWebhook(j.aesCfb, store, s3)))
 
 	return j.Executor.Start()

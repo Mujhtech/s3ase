@@ -28,12 +28,14 @@ func NewRedis(cfg *config.Config) (*Redis, error) {
 
 		options.MaxRetries = cfg.Redis.MaxRetries
 		options.MinIdleConns = cfg.Redis.MinIdleConnections
+		options.DB = cfg.Redis.DB
 
 	} else {
 		options = &redis.Options{
 			Addr:         fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
 			MaxRetries:   cfg.Redis.MaxRetries,
 			MinIdleConns: cfg.Redis.MinIdleConnections,
+			DB:           cfg.Redis.DB,
 		}
 	}
 

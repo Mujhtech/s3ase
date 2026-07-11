@@ -5,21 +5,22 @@ import (
 	"net/http"
 
 	"github.com/mujhtech/s3ase/auth"
+	"github.com/mujhtech/s3ase/cache"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/store"
 	"github.com/mujhtech/s3ase/internal/pkg/response"
 )
 
-const (
-	authSessionKey key = iota
-)
+type authSessionContextKey struct{}
 
-func RequiredUserAuth(cfg *config.Config, store *store.Store) func(http.Handler) http.Handler {
+var authSessionKey authSessionContextKey
+
+func RequiredUserAuth(cfg *config.Config, store *store.Store, cache cache.Cache) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			jwt := auth.NewJWTAuth(cfg, store.UserRepo, store.TokenRepo)
+			jwt := auth.NewJWTAuth(cfg, store.UserRepo, store.TokenRepo, cache)
 
 			session, err := jwt.UserAuthenticate(r)
 

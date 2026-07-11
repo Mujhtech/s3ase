@@ -42,7 +42,7 @@ func (h *Handler) GetApps(w http.ResponseWriter, r *http.Request) {
 	apps, err := findAppsService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -67,19 +67,19 @@ func (h *Handler) CreateApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createAppService := services.CreateAppService{
-		Body:          dst,
-		DefaultRegion: h.cfg.Aws.DefaultRegion,
-		AppRepo:       h.store.AppRepo,
-		AppMemberRepo: h.store.AppMemberRepo,
-		ApiKeyRepo:    h.store.ApiKeyRepo,
-		//S3:            h.s3,
-		User: session.User,
+		Body:                dst,
+		DefaultRegion:       h.cfg.Aws.DefaultRegion,
+		AppRepo:             h.store.AppRepo,
+		AppMemberRepo:       h.store.AppMemberRepo,
+		AppSubscriptionRepo: h.store.AppSubscriptionRepo,
+		S3:                  h.s3,
+		User:                session.User,
 	}
 
 	app, err := createAppService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -119,9 +119,37 @@ func (h *Handler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 
 	if err = updateAppService.Run(ctx); err != nil {
 
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
 	_ = response.Ok(w, r, "app updated successfully", nil)
+}
+
+func (h *Handler) DeleteApp(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	session, ok := middleware.GetAuthSession(ctx)
+	if !ok {
+		_ = response.Unauthorized(w, r, nil)
+		return
+	}
+	appID, err := getAppIdFromPath(r)
+	if err != nil {
+		_ = response.BadRequest(w, r, err)
+		return
+	}
+	dst := new(dto.DeleteAppRequestDto)
+	if err := request.ReadBody(r, dst); err != nil {
+		_ = response.BadRequest(w, r, err)
+		return
+	}
+	err = (&services.DeleteAppService{
+		AppID: appID, ConfirmName: dst.Name, AppRepo: h.store.AppRepo,
+		User: session.User, S3: h.s3,
+	}).Run(ctx)
+	if err != nil {
+		_ = response.Error(w, r, err)
+		return
+	}
+	_ = response.Ok(w, r, "app deleted successfully", nil)
 }

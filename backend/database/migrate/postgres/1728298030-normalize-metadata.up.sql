@@ -1,0 +1,9 @@
+UPDATE users SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE apps SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE app_members SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE folders SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE files SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE api_keys SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE webhooks SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE domains SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';
+UPDATE app_subscriptions SET metadata = '{}'::jsonb WHERE jsonb_typeof(metadata) <> 'object';

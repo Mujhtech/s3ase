@@ -6,9 +6,7 @@ type JobName string
 type QueueName string
 
 const (
-	JobNameWebhook JobName = "webhook"
-	JobNameAppSync JobName = "app_sync"
-
+	JobNameWebhook   JobName   = "webhook"
 	QueueNameDefault QueueName = "default"
 )
 

@@ -71,6 +71,10 @@ module.exports = {
         "plugin:import/recommended",
         "plugin:import/typescript",
       ],
+      rules: {
+        // TypeScript's type system provides the prop validation for this codebase.
+        "react/prop-types": "off",
+      },
     },
 
     // Node

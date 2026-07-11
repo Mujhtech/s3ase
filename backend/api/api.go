@@ -10,10 +10,12 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/mujhtech/s3ase/api/handler"
 	"github.com/mujhtech/s3ase/api/middleware"
+	"github.com/mujhtech/s3ase/cache"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database/store"
 	"github.com/mujhtech/s3ase/internal/pkg/s3store"
 	"github.com/mujhtech/s3ase/internal/pkg/sse"
+	"github.com/mujhtech/s3ase/internal/protocol"
 	"github.com/mujhtech/s3ase/job"
 	"github.com/rs/zerolog/hlog"
 )
@@ -23,18 +25,21 @@ type Api struct {
 	cfg     *config.Config
 	store   *store.Store
 	job     *job.Job
+	cache   cache.Cache
 }
 
 func New(
 	cfg *config.Config,
 	ctx context.Context,
+	cache cache.Cache,
 	job *job.Job,
 	store *store.Store,
 	s3 *s3store.S3Store,
 	sse sse.Streamer,
+	protocol *protocol.Protocol,
 ) (*Api, error) {
 
-	h, err := handler.New(cfg, ctx, job, store, s3, sse)
+	h, err := handler.New(cfg, ctx, cache, job, store, s3, sse, protocol)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create handler: %w", err)
 	}
@@ -44,6 +49,7 @@ func New(
 		cfg:     cfg,
 		store:   store,
 		job:     job,
+		cache:   cache,
 	}, nil
 
 }
@@ -58,19 +64,34 @@ func (a *Api) BuildRouter() *chi.Mux {
 	router.Use(hlog.MethodHandler("http.method"))
 	router.Use(middleware.WriteRequestIDHeader())
 	router.Use(middleware.HLogAccessLogHandler())
+	router.Use(middleware.ApplyCORS(a.cfg))
 
 	router.Route("/api", func(r chi.Router) {
 
 		// v1 route
-		r.Route("/v1", func(r chi.Router) {})
+		r.Route("/v1", func(r chi.Router) {
+			r.Use(middleware.RequiredAPIKeyAuth(a.store))
+			r.With(middleware.RequireAPIKeyAccess(false)).Get("/files", a.handler.GetFiles)
+			r.With(middleware.RequireAPIKeyAccess(true)).Post("/files", a.handler.UploadFile)
+			r.With(middleware.RequireAPIKeyAccess(true)).HandleFunc("/files/uploads", a.handler.TusUploadFile)
+			r.With(middleware.RequireAPIKeyAccess(true)).HandleFunc("/files/uploads/*", a.handler.TusUploadFile)
+			r.With(middleware.RequireAPIKeyAccess(false)).Get(fmt.Sprintf("/files/{%s}", handler.FileParamID), a.handler.GetFile)
+			r.With(middleware.RequireAPIKeyAccess(false)).Get(fmt.Sprintf("/files/{%s}/content", handler.FileParamID), a.handler.DownloadFile)
+			r.With(middleware.RequireAPIKeyAccess(true)).Delete(fmt.Sprintf("/files/{%s}", handler.FileParamID), a.handler.DeleteFile)
+			r.With(middleware.RequireAPIKeyAccess(false)).Get("/folders", a.handler.GetFolders)
+			r.With(middleware.RequireAPIKeyAccess(true)).Post("/folders", a.handler.CreateFolder)
+			r.With(middleware.RequireAPIKeyAccess(false)).Get(fmt.Sprintf("/folders/{%s}", handler.FolderParamID), a.handler.GetFolder)
+			r.With(middleware.RequireAPIKeyAccess(true)).Put(fmt.Sprintf("/folders/{%s}", handler.FolderParamID), a.handler.UpdateFolder)
+			r.With(middleware.RequireAPIKeyAccess(true)).Delete(fmt.Sprintf("/folders/{%s}", handler.FolderParamID), a.handler.DeleteFolder)
+		})
 
 		// ui route
 		r.Route("/ui", func(r chi.Router) {
 
 			r.Use(
-				chiMiddleware.Maybe(middleware.RequiredUserAuth(a.cfg, a.store), shouldAllowAuth),
+				chiMiddleware.Maybe(middleware.RequiredUserAuth(a.cfg, a.store, a.cache), shouldAllowAuth),
 				middleware.AppIdRequestHeader(a.store),
-				chiMiddleware.Maybe(middleware.RequiredAppMember(a.cfg, a.store), shouldAllowMember),
+				chiMiddleware.Maybe(middleware.RequiredAppMember(a.store), shouldAllowMember),
 			)
 			// r.Use(middleware.AppIdRequestHeader(a.store))
 			// r.Use(chiMiddleware.Maybe(middleware.RequiredAppMember(a.cfg, a.store), shouldAllowMember))
@@ -95,6 +116,7 @@ func (a *Api) BuildRouter() *chi.Mux {
 				r.Get("/", a.handler.GetApps)
 				r.Post("/", a.handler.CreateApp)
 				r.Put(fmt.Sprintf("/{%s}", handler.AppParamId), a.handler.UpdateApp)
+				r.Delete(fmt.Sprintf("/{%s}", handler.AppParamId), a.handler.DeleteApp)
 			})
 
 			// api keys
@@ -116,18 +138,26 @@ func (a *Api) BuildRouter() *chi.Mux {
 			// members
 			r.Route("/members", func(r chi.Router) {
 				r.Get("/", a.handler.GetMembers)
+				r.Post("/", a.handler.CreateMember)
+				r.Delete(fmt.Sprintf("/{%s}", handler.MemberParamID), a.handler.DeleteMember)
 			})
 
 			// files
 			r.Route("/files", func(r chi.Router) {
 				r.Get("/", a.handler.GetFiles)
+				r.HandleFunc("/uploads", a.handler.TusUploadFile)
+				r.HandleFunc("/uploads/*", a.handler.TusUploadFile)
+				r.Get(fmt.Sprintf("/{%s}/content", handler.FileParamID), a.handler.DownloadFile)
 				r.Get(fmt.Sprintf("/{%s}", handler.FileParamID), a.handler.GetFile)
+				r.Post("/", a.handler.UploadFile)
+				r.Delete(fmt.Sprintf("/{%s}", handler.FileParamID), a.handler.DeleteFile)
 			})
 
 			// domain
 			r.Route("/domain", func(r chi.Router) {
 				r.Get("/", a.handler.GetDomain)
 				r.Post("/", a.handler.CreateOrUpdateDomain)
+				r.Post("/verify", a.handler.VerifyDomain)
 			})
 
 			// folders
@@ -141,6 +171,10 @@ func (a *Api) BuildRouter() *chi.Mux {
 
 			// sse event
 			r.Get("/sse", a.handler.Event)
+
+			// usage
+			r.Get("/usage", a.handler.GetUsage)
+			r.Get("/subscription", a.handler.GetSubscription)
 		})
 	})
 
@@ -161,9 +195,10 @@ var guestRoutes = []string{
 }
 
 func shouldAllowAuth(r *http.Request) bool {
+	requestPath := strings.TrimSuffix(r.URL.Path, "/")
 
 	for _, route := range guestRoutes {
-		if strings.HasSuffix(r.URL.Path, route) {
+		if strings.HasSuffix(requestPath, route) {
 			return false
 		}
 	}
@@ -172,6 +207,7 @@ func shouldAllowAuth(r *http.Request) bool {
 }
 
 func shouldAllowMember(r *http.Request) bool {
+	requestPath := strings.TrimSuffix(r.URL.Path, "/")
 
 	userRoute := []string{
 		"/user",
@@ -184,7 +220,7 @@ func shouldAllowMember(r *http.Request) bool {
 	}
 
 	for _, route := range userRoute {
-		if strings.HasSuffix(r.URL.Path, route) {
+		if strings.HasSuffix(requestPath, route) {
 			return false
 		}
 	}

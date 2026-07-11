@@ -8,6 +8,7 @@ import (
 
 type DatabaseDriver string
 type PubsubProvider string
+type CacheProvider string
 
 const (
 	DatabaseDriverPostgres DatabaseDriver = "postgres"
@@ -15,22 +16,46 @@ const (
 
 	DefaultConfigFilePath string = ".env"
 
-	PubsubProviderAwsSqs PubsubProvider = "aws_sqs"
-	PubsubProviderRedis  PubsubProvider = "redis"
-	PubsubProviderGoogle PubsubProvider = "google"
-	PubsubProviderKafka  PubsubProvider = "kafka"
+	PubsubProviderAwsSqs   PubsubProvider = "aws_sqs"
+	PubsubProviderRedis    PubsubProvider = "redis"
+	PubsubProviderGoogle   PubsubProvider = "google"
+	PubsubProviderKafka    PubsubProvider = "kafka"
+	PubsubProviderAmqp     PubsubProvider = "amqp"
+	PubsubProviderInMemory PubsubProvider = "inmemory"
+
+	CacheProviderRedis    CacheProvider = "redis"
+	CacheProviderInMemory CacheProvider = "inmemory"
 )
 
 type Config struct {
-	EncryptionKey string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
-	Database      Database `json:"database"`
-	Redis         Redis    `json:"redis"`
-	Aws           Aws      `json:"aws"`
-	Server        Server   `json:"server"`
-	Auth          Auth     `json:"auth"`
-	Email         Email    `json:"email"`
-	Job           Job      `json:"job"`
-	Pubsub        Pubsub   `json:"pubsub"`
+	Environment       string   `json:"environment" envconfig:"NODE_ENV"`
+	EncryptionKey     string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
+	DomainCnameTarget string   `json:"domain_cname_target" envconfig:"DOMAIN_CNAME_TARGET"`
+	Database          Database `json:"database"`
+	Redis             Redis    `json:"redis"`
+	Aws               Aws      `json:"aws"`
+	Server            Server   `json:"server"`
+	Auth              Auth     `json:"auth"`
+	Email             Email    `json:"email"`
+	Job               Job      `json:"job"`
+	Pubsub            Pubsub   `json:"pubsub"`
+	Protocol          Protocol `json:"protocol"`
+	Cors              Cors     `json:"cors"`
+	Cache             Cache    `json:"cache"`
+}
+
+type Cache struct {
+	Provider CacheProvider `json:"provider" envconfig:"CACHE_PROVIDER"`
+}
+
+// Cors defines CORS configuration
+type Cors struct {
+	AllowedOrigins   []string `json:"allowed_origins" envconfig:"CORS_ALLOWED_ORIGINS"`
+	AllowedMethods   []string `json:"allowed_methods" envconfig:"CORS_ALLOWED_METHODS"`
+	AllowedHeaders   []string `json:"allowed_headers" envconfig:"CORS_ALLOWED_HEADERS"`
+	ExposedHeaders   []string `json:"exposed_headers" envconfig:"CORS_EXPOSED_HEADERS"`
+	AllowCredentials bool     `json:"allow_credentials" envconfig:"CORS_ALLOW_CREDENTIALS"`
+	MaxAge           int      `json:"max_age" envconfig:"CORS_MAX_AGE"`
 }
 
 // Database defines database configuration
@@ -46,9 +71,11 @@ type Database struct {
 
 // Aws defines AWS configuration
 type Aws struct {
-	DefaultRegion string `envconfig:"AWS_DEFAULT_REGION"`
+	DefaultRegion string `json:"region" envconfig:"AWS_DEFAULT_REGION"`
 	AccessKey     string `json:"access_key" envconfig:"AWS_ACCESS_KEY"`
 	SecretKey     string `json:"secret_key" envconfig:"AWS_SECRET_KEY"`
+	Endpoint      string `json:"endpoint" envconfig:"AWS_ENDPOINT"`
+	UsePathStyle  bool   `json:"use_path_style" envconfig:"AWS_USE_PATH_STYLE"`
 }
 
 // Server defines server configuration
@@ -68,6 +95,7 @@ type Redis struct {
 	Password           string `json:"password" envconfig:"REDIS_PASSWORD"`
 	MaxRetries         int    `json:"max_retries" envconfig:"REDIS_MAX_RETRIES"`
 	MinIdleConnections int    `json:"min_idle_connections" envconfig:"REDIS_MIN_IDLE_CONNECTIONS"`
+	DB                 int    `json:"db" envconfig:"REDIS_DB"`
 }
 
 type Auth struct {
@@ -103,10 +131,22 @@ type Pubsub struct {
 	ChannelSize    int            `json:"channel_size" envconfig:"PUBSUB_CHANNEL_SIZE"`
 	HealthInterval time.Duration  `json:"health_interval" envconfig:"PUBSUB_HEALTH_INTERVAL"`
 	Google         GooglePubsub   `json:"google"`
+	Amqp           Amqp           `json:"amqp"`
+	Brokers        []string       `json:"brokers" envconfig:"PUBSUB_BROKERS"`
 }
 
 type GooglePubsub struct {
 	ProjectID string `json:"project_id" envconfig:"PUBSUB_GOOGLE_PROJECT_ID"`
+}
+
+type Amqp struct {
+	Url string `json:"url" envconfig:"PUBSUB_AMQP_URL"`
+}
+
+type Protocol struct {
+	MaxSize                int64         `json:"max_size" envconfig:"PROTOCOL_MAX_SIZE"`
+	UploadProgressInterval time.Duration `json:"upload_progress_interval" envconfig:"PROTOCOL_UPLOAD_PROGRESS_INTERVAL"`
+	NetworkTimeout         time.Duration `json:"network_timeout" envconfig:"PROTOCOL_NETWORK_TIMEOUT"`
 }
 
 func (d *Database) BuildDsn() string {

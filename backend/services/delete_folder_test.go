@@ -35,10 +35,12 @@ func TestDeleteFolderService_Run(t *testing.T) {
 			},
 			mockFn: func(s *DeleteFolderService) {
 				folderRepo, _ := s.FolderRepo.(*mocks.MockFolderRepository)
+				fileRepo, _ := s.FileRepo.(*mocks.MockFileRepository)
 				folderRepo.EXPECT().
 					FindFolderByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.Folder{ID: "folder-id"}, nil)
+					Return(&models.Folder{ID: "folder-id", AppID: "app-id"}, nil)
+				fileRepo.EXPECT().FindFilesByFolderID(gomock.Any(), "folder-id").Return([]*models.File{}, nil)
 				folderRepo.EXPECT().
 					DeleteFolder(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -73,10 +75,12 @@ func TestDeleteFolderService_Run(t *testing.T) {
 			},
 			mockFn: func(s *DeleteFolderService) {
 				folderRepo, _ := s.FolderRepo.(*mocks.MockFolderRepository)
+				fileRepo, _ := s.FileRepo.(*mocks.MockFileRepository)
 				folderRepo.EXPECT().
 					FindFolderByID(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&models.Folder{ID: "folder-id"}, nil)
+					Return(&models.Folder{ID: "folder-id", AppID: "app-id"}, nil)
+				fileRepo.EXPECT().FindFilesByFolderID(gomock.Any(), "folder-id").Return([]*models.File{}, nil)
 				folderRepo.EXPECT().
 					DeleteFolder(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -94,6 +98,7 @@ func TestDeleteFolderService_Run(t *testing.T) {
 			service := &DeleteFolderService{
 				App:        tt.args.app,
 				FolderRepo: mocks.NewMockFolderRepository(ctrl),
+				FileRepo:   mocks.NewMockFileRepository(ctrl),
 				User:       tt.args.user,
 				FolderId:   tt.args.folderId,
 			}

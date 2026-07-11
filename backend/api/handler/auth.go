@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	jwtAuth "github.com/mujhtech/s3ase/auth"
 	"github.com/mujhtech/s3ase/config"
@@ -42,20 +43,12 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	state, err := auth.GenerateState(h.cfg, provider.Name(), redirectUrl)
+	if err != nil {
+		_ = response.InternalServerError(w, r, err)
+		return
+	}
 
 	authUrl := provider.AuthCodeURL(string(state), oauth2.SetAuthURLParam("prompt", "consent"))
-
-	if err != nil {
-
-		// add error to redirect url query
-		query := url.Values{}
-		query.Add("error", err.Error())
-
-		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect); err != nil {
-			log.Error().Err(err).Msg("failed to redirect")
-			return
-		}
-	}
 
 	// set state cookie
 	createCookie(w, CookieOptions{
@@ -64,11 +57,11 @@ func (h *Handler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 		MaxAge:   300,
-		Secure:   true,
+		Secure:   h.cfg.Server.SSL || strings.HasPrefix(h.cfg.Auth.RedirectUrl, "https://"),
 		HttpOnly: true,
 	})
 
-	if err = response.Redirect(w, r, authUrl, http.StatusTemporaryRedirect); err != nil {
+	if err = response.Redirect(w, r, authUrl, http.StatusTemporaryRedirect, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}
@@ -141,7 +134,7 @@ func (h *Handler) AuthenticateCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create token
-	tokenManager := jwtAuth.NewJWTAuth(h.cfg, h.store.UserRepo, h.store.TokenRepo)
+	tokenManager := jwtAuth.NewJWTAuth(h.cfg, h.store.UserRepo, h.store.TokenRepo, h.cache)
 
 	_, authToken, err := tokenManager.CreateToken(ctx, user.ID, "bearer")
 
@@ -168,11 +161,11 @@ func (h *Handler) AuthenticateCallback(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		Path:     "/",
 		MaxAge:   -1,
-		Secure:   true,
+		Secure:   h.cfg.Server.SSL || strings.HasPrefix(h.cfg.Auth.RedirectUrl, "https://"),
 		HttpOnly: true,
 	})
 
-	if err = response.Redirect(w, r, redirectTo.String(), http.StatusTemporaryRedirect); err != nil {
+	if err = response.Redirect(w, r, redirectTo.String(), http.StatusTemporaryRedirect, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}
@@ -199,7 +192,7 @@ func (h *Handler) AuthenticateCallbackPost(w http.ResponseWriter, r *http.Reques
 
 		query.Add("error", err.Error())
 
-		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect); err != nil {
+		if err = response.Redirect(w, r, fmt.Sprintf("%s?%s", redirectUrl, query.Encode()), http.StatusTemporaryRedirect, true); err != nil {
 			log.Error().Err(err).Msg("failed to redirect")
 			return
 		}
@@ -210,7 +203,7 @@ func (h *Handler) AuthenticateCallbackPost(w http.ResponseWriter, r *http.Reques
 	query.Add("state", authState)
 	query.Add("code", code)
 
-	if err = response.Redirect(w, r, fmt.Sprintf("/%s/callback?%s", provider.Name(), query.Encode()), http.StatusSeeOther); err != nil {
+	if err = response.Redirect(w, r, fmt.Sprintf("/%s/callback?%s", provider.Name(), query.Encode()), http.StatusSeeOther, true); err != nil {
 		log.Error().Err(err).Msg("failed to redirect")
 		return
 	}

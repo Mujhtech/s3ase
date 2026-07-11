@@ -1,26 +1,45 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import React from "react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableRow } from "~/components/ui/table";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import { getMembers } from "~/services/member.server";
-import { UserAvatar } from "~/components/layout/user-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import { useApp } from "~/hooks/use-apps";
+import { parseWithZod } from "@conform-to/zod";
+import { ActionFunctionArgs,json,LoaderFunctionArgs,redirect } from "@remix-run/node";
 import { CircleEllipsis } from "lucide-react";
+import { typedjson,useTypedLoaderData } from "remix-typedjson";
+import { UserAvatar } from "~/components/layout/user-menu";
 import InviteMemberDialog from "~/components/member/invite-member-dialog";
+import { Card,CardContent,CardHeader } from "~/components/ui/card";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Table,TableBody,TableCell,TableRow } from "~/components/ui/table";
+import { useApp } from "~/hooks/use-apps";
+import { settingsMenuPath } from "~/lib/path";
+import { RemoveMemberFormSchema,SendInviteFormSchema } from "~/models/member";
+import { createMember,getMembers,removeMember } from "~/services/member.server";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { appSlug } = AppSlugParamSchema.parse(params);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  if (intent === "remove") {
+    const submission = parseWithZod(formData, { schema: RemoveMemberFormSchema });
+    if (submission.status !== "success") return json(submission.reply());
+    await removeMember(request, submission.value.memberId);
+  } else {
+    const submission = parseWithZod(formData, { schema: SendInviteFormSchema });
+    if (submission.status !== "success") return json(submission.reply());
+    try {
+      await createMember(request, submission.value);
+    } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Unable to add member" });
+    }
+  }
+  return redirect(settingsMenuPath(appSlug, "members"));
+};
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { appSlug } = AppSlugParamSchema.parse(params);
+  AppSlugParamSchema.parse(params);
 
   const members = await getMembers(request);
 
@@ -45,7 +64,7 @@ export default function Page() {
             <TableBody>
               {members.map((member) => {
                 return (
-                  <TableRow>
+                  <TableRow key={member.id}>
                     <TableCell className="font-medium">
                       <div className="flex gap-2">
                         <UserAvatar user={member.user} />
@@ -68,8 +87,12 @@ export default function Page() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem>
-                              <DropdownMenuLabel>Remove</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <form method="post">
+                                <input type="hidden" name="intent" value="remove" />
+                                <input type="hidden" name="memberId" value={member.id} />
+                                <button type="submit" className="w-full text-left">Remove</button>
+                              </form>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

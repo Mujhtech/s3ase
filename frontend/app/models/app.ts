@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 
 export const AppSchema = z.object({
   id: z.string(),
@@ -7,9 +7,9 @@ export const AppSchema = z.object({
   owner_id: z.string(),
   bucket: z.string(),
   region: z.string(),
-  domain: z.string(),
+  domain: z.string().optional(),
   slug: z.string(),
-  description: z.string(),
+  description: z.string().nullable().transform((value) => value ?? ""),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -42,3 +42,8 @@ export const CreateAppResponseSchema = ServerResponseSchema.extend({
 });
 
 export type CreateAppResponse = z.infer<typeof CreateAppResponseSchema>;
+
+export const DeleteAppFormSchema = z.object({
+  name: z.string().min(1, "Enter the app name"),
+  type: z.literal("delete-app"),
+});

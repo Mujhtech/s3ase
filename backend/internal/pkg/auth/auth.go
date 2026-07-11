@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -52,8 +51,14 @@ type AuthProvider interface {
 func GetAuthProvider(cfg *config.Config, name string, redirectUrl string) (AuthProvider, error) {
 	switch name {
 	case "google":
+		if cfg.Auth.GoogleAuth.ClientID == "" || cfg.Auth.GoogleAuth.ClientSecret == "" {
+			return nil, fmt.Errorf("google authentication is not configured")
+		}
 		return NewGoogleProvider(cfg.Auth.GoogleAuth, redirectUrl)
 	case "github":
+		if cfg.Auth.GithubAuth.ClientID == "" || cfg.Auth.GithubAuth.ClientSecret == "" {
+			return nil, fmt.Errorf("github authentication is not configured")
+		}
 		return NewGithubProvider(cfg.Auth.GithubAuth, redirectUrl)
 	default:
 		return nil, fmt.Errorf("auth provider %s not supported", name)
@@ -67,17 +72,20 @@ func makeRequest(token *oauth2.Token, config *oauth2.Config, url string, dst int
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-
-	bodyBytes, _ := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	res.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	bodyBytes, readErr := io.ReadAll(res.Body)
+	closeErr := res.Body.Close()
+	if readErr != nil {
+		return fmt.Errorf("failed to read authentication response: %w", readErr)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("failed to close authentication response: %w", closeErr)
+	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
 		return errors.New(string(bodyBytes))
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(dst); err != nil {
+	if err := json.Unmarshal(bodyBytes, dst); err != nil {
 		return err
 	}
 

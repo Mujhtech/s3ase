@@ -153,7 +153,7 @@ func (a *appMemberRepo) FindAppMemberByAppIDAndUserId(ctx context.Context, appID
 
 	member := new(models.AppMember)
 	if err := a.db.GetDB().GetContext(ctx, member, sql, args...); err != nil {
-		return nil, ProcessSQLErrorfWithCtx(ctx, sql, err, "failed to find app member by id")
+		return nil, ProcessSQLErrorfWithCtx(ctx, sql, err, "failed to find app member by app id and user id")
 	}
 
 	return member, nil

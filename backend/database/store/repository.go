@@ -37,6 +37,11 @@ type AppMemberRepository interface {
 	DeleteAppMember(ctx context.Context, id string) error
 }
 
+type AppSubscriptionRepository interface {
+	CreateAppSubscription(ctx context.Context, subscription *models.AppSubscription) error
+	FindAppSubscriptionByAppID(ctx context.Context, appID string) (*models.AppSubscription, error)
+}
+
 type FolderRepository interface {
 	CreateFolder(ctx context.Context, folder *models.Folder) error
 	UpdateFolder(ctx context.Context, folder *models.Folder) error
@@ -60,7 +65,9 @@ type ApiKeyRepository interface {
 	CreateApiKey(ctx context.Context, apiKey *models.ApiKey) error
 	UpdateApiKey(ctx context.Context, apiKey *models.ApiKey) error
 	FindApiKeyByID(ctx context.Context, id string) (*models.ApiKey, error)
+	FindApiKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error)
 	FindApiKeysByAppID(ctx context.Context, appId string) ([]*models.ApiKey, error)
+	TouchApiKey(ctx context.Context, id string) error
 	DeleteApiKey(ctx context.Context, id string) error
 }
 

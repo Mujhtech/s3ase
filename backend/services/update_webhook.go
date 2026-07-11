@@ -10,22 +10,31 @@ import (
 )
 
 type UpdateWebhookService struct {
-	WebhookId   string
-	App         *models.App
-	WebhookRepo store.WebhookRepository
-	User        *models.User
-	Body        *dto.CreateWebhookRequestDto
+	WebhookId     string
+	App           *models.App
+	AppMemberRepo store.AppMemberRepository
+	WebhookRepo   store.WebhookRepository
+	User          *models.User
+	Body          *dto.CreateWebhookRequestDto
 }
 
 func (c *UpdateWebhookService) Run(ctx context.Context) error {
-
+	if err := requireAppOwner(ctx, c.AppMemberRepo, c.App.ID, c.User.ID); err != nil {
+		return err
+	}
 	webhook, err := c.WebhookRepo.FindWebhookByID(ctx, c.WebhookId)
 
 	if err != nil {
 		return err
 	}
+	if err := requireSameApp(c.App.ID, webhook.AppID); err != nil {
+		return err
+	}
+	if err := validateWebhook(c.Body); err != nil {
+		return err
+	}
 
-	if err := c.WebhookRepo.CreateWebhook(ctx, &models.Webhook{
+	if err := c.WebhookRepo.UpdateWebhook(ctx, &models.Webhook{
 		ID:          webhook.ID,
 		AppID:       c.App.ID,
 		Name:        c.Body.Name,

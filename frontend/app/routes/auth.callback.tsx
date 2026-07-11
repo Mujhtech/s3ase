@@ -1,7 +1,7 @@
-import { createCookie, type LoaderFunction, redirect } from "@remix-run/node";
-import { commitSession, setAuthSession } from "~/services/auth.server";
+import { createCookie,type LoaderFunction,redirect } from "@remix-run/node";
+import { commitSession,setAuthSession } from "~/services/auth.server";
 
-export let loader: LoaderFunction = async ({ request }) => {
+export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
 
@@ -15,7 +15,7 @@ export let loader: LoaderFunction = async ({ request }) => {
 
   const session = await setAuthSession(request, token);
 
-  let headers = new Headers({ "Set-Cookie": await commitSession(session) });
+  const headers = new Headers({ "Set-Cookie": await commitSession(session) });
 
   return redirect(redirectTo, {
     headers,

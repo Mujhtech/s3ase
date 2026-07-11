@@ -1,5 +1,4 @@
-import { LayoutGrid, LayoutList } from "lucide-react";
-import React from "react";
+import { LayoutGrid,LayoutList } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 export default function FileLayout({

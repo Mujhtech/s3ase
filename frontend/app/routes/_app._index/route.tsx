@@ -1,5 +1,5 @@
-import { LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { appPath, appsPath } from "~/lib/path";
+import { LoaderFunctionArgs,redirect } from "@remix-run/node";
+import { appPath,appsPath } from "~/lib/path";
 import { getApps } from "~/services/app.server";
 import { requireUser } from "~/services/user.server";
 

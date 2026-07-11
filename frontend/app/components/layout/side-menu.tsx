@@ -1,24 +1,22 @@
-import React from "react";
 import {
-  Gauge,
-  FileBox,
-  Settings,
-  LockKeyhole,
-  Folder,
-  Webhook,
+Folder,
+Gauge,
+LockKeyhole,
+Settings,
+Webhook
 } from "lucide-react";
+import React from "react";
 
-import { User } from "~/models/user";
-import { Link, useLocation } from "@remix-run/react";
-import { cn } from "~/lib/utils";
+import { Link,useLocation } from "@remix-run/react";
 import {
-  apiKeysPath,
-  appPath,
-  filesPath,
-  logoutPath,
-  settingsPath,
-  webhooksPath,
+apiKeysPath,
+appPath,
+filesPath,
+settingsPath,
+webhooksPath
 } from "~/lib/path";
+import { cn } from "~/lib/utils";
+import { User } from "~/models/user";
 import AnimatedLogo from "../animated-logo";
 import UserMenu from "./user-menu";
 
@@ -33,9 +31,9 @@ export default function SideMenu({
     <div className="h-full overflow-hidden hidden md:flex flex-col bg-background">
       <div className="flex flex-col justify-between h-full">
         <div className="flex flex-col px-4 mt-6">
-          <a href="" className="relative flex items-center md:justify-center">
+          <Link to={appPath(appSlug)} className="relative flex items-center md:justify-center">
             <AnimatedLogo />
-          </a>
+          </Link>
           <nav className="mt-8">
             <ul className="flex flex-col gap-3">
               <MenuItem

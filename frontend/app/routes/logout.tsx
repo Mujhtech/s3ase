@@ -1,8 +1,7 @@
-import { createCookie, type LoaderFunction, redirect } from "@remix-run/node";
+import { type LoaderFunction,redirect } from "@remix-run/node";
 import {
-  clearAuthSession,
-  commitSession,
-  setAuthSession,
+clearAuthSession,
+commitSession
 } from "~/services/auth.server";
 
 export const loader: LoaderFunction = async ({ request }) => {

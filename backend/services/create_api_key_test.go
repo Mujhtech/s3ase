@@ -110,6 +110,9 @@ func TestCreateApiKeyService_Run(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, apiKey)
 				require.Equal(t, tt.args.apiKey.Name, apiKey.Name)
+				require.NotEmpty(t, apiKey.Secret)
+				require.Contains(t, apiKey.Secret, "s3ase_")
+				require.NotEmpty(t, apiKey.KeyHash)
 			}
 		})
 	}

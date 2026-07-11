@@ -1,14 +1,14 @@
-import React, { useMemo } from "react";
-import { Button } from "../ui/button";
-import { useFetcher } from "@remix-run/react";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import FormField from "../ui/form-field";
-import { Label } from "../ui/label";
+import { useFetcher } from "@remix-run/react";
+import React,{ useMemo } from "react";
+import { CreateOrUpdateDomainFormSchema,Domain } from "~/models/domain";
+import { Button } from "../ui/button";
 import FormError from "../ui/form-error";
-import { Input, InputGroup } from "../ui/input";
+import FormField from "../ui/form-field";
+import { InputGroup } from "../ui/input";
+import { Label } from "../ui/label";
 import Paragraph from "../ui/paragraph";
-import { CreateOrUpdateDomainFormSchema, Domain } from "~/models/domain";
 
 export default function AppDomainForm({ domain }: { domain: Domain | null }) {
   const fetcher = useFetcher();
@@ -23,7 +23,7 @@ export default function AppDomainForm({ domain }: { domain: Domain | null }) {
       return { subDomain, domain: rest.join(".") };
     }
     return { subDomain: "", domain: "" };
-  }, [url]);
+  }, [domain]);
 
   const [form, fields] = useForm({
     id: "create-or-update-domain-form",
@@ -48,7 +48,8 @@ export default function AppDomainForm({ domain }: { domain: Domain | null }) {
         type="hidden"
         key={fields.domain.key}
         name={fields.domain.name}
-        defaultValue={`https://${url?.trim()}`}
+    value={`https://${url?.trim()}`}
+    readOnly
       />
       <FormField>
         <InputGroup
@@ -67,20 +68,23 @@ export default function AppDomainForm({ domain }: { domain: Domain | null }) {
       {domain && (
         <div className="flex flex-col gap-3">
           <Paragraph>
-            Please set the following CNAME record on
+      Add both DNS records below on
             <code className="mx-1 py-0.5 px-1 border-border border">
               {domainInfo.domain}
             </code>
             to prove ownership of
             <code className="ml-1 py-0.5 px-1 border-border border">{url}</code>
           </Paragraph>
-          <div className="grid grid-cols-[repeat(3,min-content)] items-end gap-x-10 gap-y-1 border p-2">
+      <div className="grid grid-cols-[repeat(3,min-content)] items-end gap-x-10 gap-y-1 border p-2 overflow-x-auto">
             <Paragraph>Type</Paragraph>
             <Paragraph>Name</Paragraph>
             <Paragraph>Value</Paragraph>
             <Paragraph>CNAME</Paragraph>
             <Paragraph>{domainInfo.subDomain}</Paragraph>
             <Paragraph>{domain.cname_record}</Paragraph>
+      <Paragraph>TXT</Paragraph>
+      <Paragraph>_s3ase</Paragraph>
+      <Paragraph>{domain.txt_record}</Paragraph>
           </div>
         </div>
       )}

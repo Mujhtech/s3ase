@@ -29,7 +29,7 @@ func (h *Handler) GetDomain(w http.ResponseWriter, r *http.Request) {
 	domain, err := findDomainService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -54,18 +54,37 @@ func (h *Handler) CreateOrUpdateDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createOrUpdateDomainService := services.CreateOrUpdateDomainService{
-		App:        app,
-		DomainRepo: h.store.DomainRepo,
-		User:       session.User,
-		Body:       dst,
+		App:           app,
+		AppMemberRepo: h.store.AppMemberRepo,
+		DomainRepo:    h.store.DomainRepo,
+		User:          session.User,
+		Body:          dst,
+		CnameTarget:   h.cfg.DomainCnameTarget,
 	}
 
 	domain, err := createOrUpdateDomainService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
 	_ = response.Created(w, r, "domain created", domain)
+}
+
+func (h *Handler) VerifyDomain(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	session, app, err := middleware.AuthSessionAndAppFrom(ctx)
+	if err != nil {
+		_ = response.Unauthorized(w, r, err)
+		return
+	}
+	domain, err := (&services.VerifyDomainService{
+		App: app, User: session.User, AppMemberRepo: h.store.AppMemberRepo, DomainRepo: h.store.DomainRepo,
+	}).Run(ctx)
+	if err != nil {
+		_ = response.Error(w, r, err)
+		return
+	}
+	_ = response.Ok(w, r, "domain verification checked", domain)
 }

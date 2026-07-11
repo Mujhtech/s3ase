@@ -1,0 +1,1 @@
+-- The normalization is intentionally irreversible: object JSON is the canonical format.

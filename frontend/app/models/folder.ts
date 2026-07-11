@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { ServerResponse, ServerResponseSchema } from "./default";
+import { ServerResponseSchema } from "./default";
 import { MediaUploadSchema } from "./file";
 
 export const FolderSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string(),
-  url: z.string(),
+  description: z.string().nullable().transform((value) => value ?? ""),
+  url: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

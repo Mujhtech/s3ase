@@ -11,7 +11,7 @@ import (
 
 const (
 	userBaseTable    = "users"
-	userSelectColumn = "id, given_name, display_name, email, email_verified, avatar_url, authentication_method, password, created_at, updated_at, deleted_at"
+	userSelectColumn = "id, given_name, COALESCE(display_name, '') AS display_name, email, email_verified, COALESCE(avatar_url, '') AS avatar_url, authentication_method, password, created_at, updated_at, deleted_at"
 )
 
 type userRepo struct {

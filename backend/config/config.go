@@ -1,10 +1,27 @@
 package config
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/kelseyhightower/envconfig"
 )
 
 var DefaultConfig = &Config{
+	Environment:       "development",
+	EncryptionKey:     "development-only-change-me-key!!",
+	DomainCnameTarget: "files.s3ase.dev",
+	Cache: Cache{
+		Provider: CacheProviderRedis,
+	},
+	Cors: Cors{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Accept", "Authorization", "Accept-Encoding", "Content-Length", "Content-Type", "X-CSRF-Token", "X-Requested-With", "X-Requested-Id", "x-app-id", "Tus-Resumable", "Upload-Length", "Upload-Offset", "Upload-Metadata", "Upload-Defer-Length", "Upload-Concat"},
+		ExposedHeaders:   []string{"Link", "Location", "Tus-Resumable", "Tus-Version", "Tus-Extension", "Tus-Max-Size", "Upload-Length", "Upload-Offset", "Upload-Metadata", "X-File-ID"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	},
 	Database: Database{
 		Driver:   DatabaseDriverPostgres,
 		Host:     "localhost",
@@ -21,13 +38,16 @@ var DefaultConfig = &Config{
 		Password:           "",
 		MinIdleConnections: 0,
 		MaxRetries:         3,
+		DB:                 1,
 	},
 	Aws: Aws{
-		DefaultRegion: "eu-west-1",
+		DefaultRegion: "eu-west-2",
+		UsePathStyle:  false,
 	},
 	Server: Server{
-		Port: 5555,
-		SSL:  false,
+		Port:    5555,
+		SSL:     false,
+		Timeout: 30,
 	},
 	Auth: Auth{
 		RedirectUrl:   "http://localhost:5555",
@@ -40,22 +60,80 @@ var DefaultConfig = &Config{
 		Concurrency: 10,
 	},
 	Pubsub: Pubsub{
+		Provider:       PubsubProviderInMemory,
 		App:            "s3ase",
 		Namespace:      "s3ase",
 		HealthInterval: 2,
 		SendTimeout:    60,
-		ChannelSize:    100,
+		ChannelSize:    500,
+	},
+	Protocol: Protocol{
+		MaxSize:                1073741824,
+		UploadProgressInterval: time.Second,
+		NetworkTimeout:         30 * time.Second,
 	},
 }
 
 func LoadConfig() (*Config, error) {
-	config := DefaultConfig
+	config := *DefaultConfig
 
 	// Override config from environment variables
-	err := envconfig.Process("", config)
+	err := envconfig.Process("", &config)
 	if err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	if err = config.validate(); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+func (c *Config) validate() error {
+	if len(c.EncryptionKey) != 32 {
+		return fmt.Errorf("encryption key must be exactly 32 bytes")
+	}
+	if c.Environment == "production" && c.EncryptionKey == DefaultConfig.EncryptionKey {
+		return fmt.Errorf("encryption key must be changed in production")
+	}
+	if c.Server.Port == 0 {
+		return fmt.Errorf("server port cannot be zero")
+	}
+	if c.DomainCnameTarget == "" {
+		return fmt.Errorf("domain CNAME target cannot be empty")
+	}
+	if c.Protocol.MaxSize <= 0 {
+		return fmt.Errorf("protocol max size must be greater than zero")
+	}
+	if c.Protocol.UploadProgressInterval <= 0 {
+		return fmt.Errorf("protocol upload progress interval must be greater than zero")
+	}
+	if c.Protocol.NetworkTimeout <= 0 {
+		return fmt.Errorf("protocol network timeout must be greater than zero")
+	}
+	if (c.Auth.GithubAuth.ClientID == "") != (c.Auth.GithubAuth.ClientSecret == "") {
+		return fmt.Errorf("github auth client id and secret must be configured together")
+	}
+	if (c.Auth.GoogleAuth.ClientID == "") != (c.Auth.GoogleAuth.ClientSecret == "") {
+		return fmt.Errorf("google auth client id and secret must be configured together")
+	}
+	if (c.Aws.AccessKey == "") != (c.Aws.SecretKey == "") {
+		return fmt.Errorf("aws access key and secret key must be configured together")
+	}
+
+	// Validate database configuration
+	if c.Database.Host == "" {
+		return fmt.Errorf("database host cannot be empty")
+	}
+	if c.Database.Port == 0 {
+		return fmt.Errorf("database port cannot be zero")
+	}
+
+	dbDsn := c.Database.BuildDsn()
+	if dbDsn == "" {
+		return fmt.Errorf("database dsn is empty")
+	}
+
+	return nil
 }

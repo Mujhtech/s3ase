@@ -24,7 +24,11 @@ type ApiKey struct {
 	Access      ApiKeyAccess `json:"access" db:"access"`
 	ExpiredAt   null.Int     `json:"expired_at" db:"expired_at"`
 	LastUsed    null.Time    `json:"last_used" db:"last_used"`
-	Metadata    interface{}  `json:"metadata" db:"metadata"`
+	KeyHash     string       `json:"-" db:"key_hash"`
+	KeyPrefix   string       `json:"key_prefix,omitempty" db:"key_prefix"`
+	LastFour    string       `json:"last_four,omitempty" db:"last_four"`
+	Secret      string       `json:"secret,omitempty" db:"-"`
+	Metadata    Metadata     `json:"metadata" db:"metadata"`
 	CreatedAt   time.Time    `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt   time.Time    `json:"updated_at,omitempty" db:"updated_at,omitempty"`
 	DeletedAt   null.Time    `json:"deleted_at,omitempty" db:"deleted_at"`

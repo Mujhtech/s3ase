@@ -1,30 +1,28 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { useFetcher, useLocation, useNavigation } from "@remix-run/react";
-import { Label } from "~/components/ui/label";
-import { Input, InputGroup } from "~/components/ui/input";
-import FormField from "~/components/ui/form-field";
-import { useState } from "react";
-import { useForm, useInputControl } from "@conform-to/react";
+import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import FormError from "~/components/ui/form-error";
-import { CreateWebhookFormSchema, Webhook } from "~/models/webhook";
-import { Textarea } from "../ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+import { useFetcher } from "@remix-run/react";
 import { CircleEllipsis } from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import {
+Dialog,
+DialogContent,
+DialogTitle,
+DialogTrigger,
+} from "~/components/ui/dialog";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import FormError from "~/components/ui/form-error";
+import FormField from "~/components/ui/form-field";
+import { Input,InputGroup } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { CreateWebhookFormSchema,Webhook } from "~/models/webhook";
 import { Checkbox } from "../ui/checkbox";
+import { Textarea } from "../ui/textarea";
 
 const events = [
   {
@@ -52,12 +50,12 @@ export default function CreateWebhookDialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(webhook?.metadata.events ?? []);
   const [url, setUrl] = useState<string | undefined>(
     webhook?.url.replace("https://", "") || ""
   );
 
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ error?: string }>();
 
   const [form, fields] = useForm({
     id: "create-webhook-form",
@@ -90,8 +88,15 @@ export default function CreateWebhookDialog({
                 </button>
               </DialogTrigger>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <DropdownMenuLabel>Remove</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+        <fetcher.Form method="post">
+        <input type="hidden" name="id" value={webhook.id} />
+        <input type="hidden" name="name" value={webhook.name} />
+        <input type="hidden" name="description" value={webhook.description} />
+        <input type="hidden" name="url" value={webhook.url} />
+        {webhook.metadata.events.map((event) => <input key={event} type="hidden" name="events" value={event} />)}
+        <button type="submit" name="intent" value="delete" className="w-full text-left">Remove</button>
+        </fetcher.Form>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -120,14 +125,12 @@ export default function CreateWebhookDialog({
             type="hidden"
             key={fields.url.key}
             name={fields.url.name}
-            defaultValue={`https://${url?.trim()}`}
+      value={`https://${url?.trim()}`}
+      readOnly
           />
-          <input
-            type="hidden"
-            key={fields.events.key}
-            name={fields.events.name}
-            defaultValue={selectedEvents}
-          />
+      {selectedEvents.map((event) => (
+      <input key={event} type="hidden" name={fields.events.name} value={event} />
+      ))}
           <FormField>
             <Label>Name</Label>
             <Input
@@ -137,6 +140,7 @@ export default function CreateWebhookDialog({
             />
             <FormError>{fields.name.errors}</FormError>
           </FormField>
+      {fetcher.data?.error && <FormError>{fetcher.data.error}</FormError>}
 
           <FormField>
             <Label>Description (Optional)</Label>
@@ -164,9 +168,9 @@ export default function CreateWebhookDialog({
 
           <FormField>
             <Label className="mb-2">Event to listens to</Label>
-            {events.map((item, index) => (
+            {events.map((item) => (
               <div
-                key={index}
+                key={item.name}
                 className="flex flex-row items-start space-x-3 space-y-0"
               >
                 <Checkbox

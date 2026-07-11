@@ -1,28 +1,26 @@
-import React from "react";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Card,CardContent } from "~/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableHeader,
-  TableHead,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from "~/components/ui/table";
 
-import { ActionFunction, json, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
-import { useApp } from "~/hooks/use-apps";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import {
-  createApiKey,
-  deleteApiKey,
-  getApiKeys,
-  updateApiKey,
-} from "~/services/api_key.server";
-import CreateApiKeyDialog from "~/components/api-key/create-api-key-dialog";
 import { parseWithZod } from "@conform-to/zod";
-import { CreateApiKeyFormSchema } from "~/models/api_key";
+import { ActionFunction,json,LoaderFunctionArgs } from "@remix-run/node";
+import { redirect,typedjson,useTypedLoaderData } from "remix-typedjson";
+import CreateApiKeyDialog from "~/components/api-key/create-api-key-dialog";
 import { apiKeysPath } from "~/lib/path";
+import { CreateApiKeyFormSchema } from "~/models/api_key";
+import {
+createApiKey,
+deleteApiKey,
+getApiKeys,
+updateApiKey,
+} from "~/services/api_key.server";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 
 export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
@@ -36,9 +34,10 @@ export const action: ActionFunction = async ({ request, params }) => {
     const { appSlug } = AppSlugParamSchema.parse(params);
 
     switch (submission.value.intent) {
-      case "create":
-        await createApiKey(request, submission.value);
-        break;
+      case "create": {
+        const created = await createApiKey(request, submission.value);
+        return json({ secret: created.secret });
+      }
       case "delete":
         await deleteApiKey(request, submission.value.id!);
         break;
@@ -48,13 +47,13 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     return redirect(apiKeysPath(appSlug), {});
-  } catch (e) {
-    return json(submission.reply());
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Unable to save API key" });
   }
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { appSlug } = AppSlugParamSchema.parse(params);
+  AppSlugParamSchema.parse(params);
 
   const apiKeys = await getApiKeys(request);
 
@@ -65,7 +64,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function Page() {
   const { apiKeys } = useTypedLoaderData<typeof loader>();
-  const app = useApp();
 
   return (
     <div className="flex flex-col w-full">
@@ -90,7 +88,14 @@ export default function Page() {
                   return (
                     <TableRow key={apiKey.id}>
                       <TableCell className="font-medium py-2">
-                        {apiKey.name}
+            <div className="flex flex-col">
+              <span>{apiKey.name}</span>
+              {apiKey.key_prefix && (
+              <span className="font-mono text-xs text-muted-foreground">
+                {apiKey.key_prefix}…{apiKey.last_four}
+              </span>
+              )}
+            </div>
                       </TableCell>
                       <TableCell className="capitalize py-2">
                         {apiKey.access}

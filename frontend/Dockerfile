@@ -8,7 +8,7 @@ FROM base AS deps
 
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 ADD package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN pnpm install --ignore-scripts --no-frozen-lockfile
@@ -23,7 +23,7 @@ ENV NODE_ENV production
 
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 COPY --from=deps /app/node_modules /app/node_modules
 ADD package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
@@ -37,7 +37,7 @@ FROM base AS build
 
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 COPY --from=deps /app/node_modules /app/node_modules
 
@@ -53,7 +53,7 @@ ENV NODE_ENV production
 
 WORKDIR /app
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 COPY --from=build /app /app
 

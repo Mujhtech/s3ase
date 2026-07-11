@@ -3,6 +3,7 @@ package response
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
+	"github.com/mujhtech/s3ase/database/store"
+	errs "github.com/mujhtech/s3ase/errors"
 	"github.com/mujhtech/s3ase/internal/pkg/sse"
 	"github.com/rs/zerolog/log"
 )
@@ -33,6 +36,9 @@ func (res Response) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 func BadRequest(w http.ResponseWriter, r *http.Request, err error) error {
+	if err == nil {
+		err = fmt.Errorf("the request could not be processed")
+	}
 	_ = render.Render(w, r, ServerResponse{
 		Response: Response{
 			StatusCode: http.StatusBadRequest,
@@ -45,6 +51,9 @@ func BadRequest(w http.ResponseWriter, r *http.Request, err error) error {
 }
 
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error) error {
+	if err == nil {
+		err = fmt.Errorf("an unexpected error occurred")
+	}
 	_ = render.Render(w, r, ServerResponse{
 		Response: Response{
 			StatusCode: http.StatusInternalServerError,
@@ -81,6 +90,9 @@ func Created(w http.ResponseWriter, r *http.Request, message string, data interf
 }
 
 func Unauthorized(w http.ResponseWriter, r *http.Request, err error) error {
+	if err == nil {
+		err = fmt.Errorf("authentication is required")
+	}
 	_ = render.Render(w, r, ServerResponse{
 		Response: Response{
 			StatusCode: http.StatusUnauthorized,
@@ -92,11 +104,54 @@ func Unauthorized(w http.ResponseWriter, r *http.Request, err error) error {
 	return nil
 }
 
-func Redirect(w http.ResponseWriter, r *http.Request, u string, status int) error {
-	parsedUrl, err := url.ParseRequestURI(u)
-	if err != nil || parsedUrl.Host != "" {
-		return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
+func Forbidden(w http.ResponseWriter, r *http.Request, err error) error {
+	return render.Render(w, r, ServerResponse{
+		Response: Response{StatusCode: http.StatusForbidden},
+		Message:  "Forbidden",
+		Error:    err.Error(),
+	})
+}
+
+func NotFound(w http.ResponseWriter, r *http.Request, err error) error {
+	return render.Render(w, r, ServerResponse{
+		Response: Response{StatusCode: http.StatusNotFound},
+		Message:  "Not Found",
+		Error:    err.Error(),
+	})
+}
+
+func Conflict(w http.ResponseWriter, r *http.Request, err error) error {
+	return render.Render(w, r, ServerResponse{
+		Response: Response{StatusCode: http.StatusConflict},
+		Message:  "Conflict",
+		Error:    err.Error(),
+	})
+}
+
+func Error(w http.ResponseWriter, r *http.Request, err error) error {
+	switch {
+	case errors.Is(err, errs.ErrNotAuthorized):
+		return Forbidden(w, r, err)
+	case errors.Is(err, store.ErrNotFound):
+		return NotFound(w, r, err)
+	case errors.Is(err, errs.ErrInvalidInput):
+		return BadRequest(w, r, err)
+	case errors.Is(err, errs.ErrConflict):
+		return Conflict(w, r, err)
+	default:
+		log.Ctx(r.Context()).Error().Err(err).Msg("request failed")
+		return InternalServerError(w, r, fmt.Errorf("an unexpected error occurred"))
 	}
+}
+
+func Redirect(w http.ResponseWriter, r *http.Request, u string, status int, ignoreUrl bool) error {
+	if !ignoreUrl {
+		parsedUrl, err := url.ParseRequestURI(u)
+		if err != nil || parsedUrl.Host != "" {
+			return BadRequest(w, r, fmt.Errorf("invalid redirect URL"))
+		}
+	}
+
 	http.Redirect(w, r, u, status)
 	return nil
 }

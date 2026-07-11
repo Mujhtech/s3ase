@@ -44,7 +44,7 @@ func (h *Handler) GetFolders(w http.ResponseWriter, r *http.Request) {
 	folders, err := findFoldersService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *Handler) GetFolder(w http.ResponseWriter, r *http.Request) {
 	folder, err := findFolderService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (h *Handler) CreateFolder(w http.ResponseWriter, r *http.Request) {
 	folder, err := createFolderService.Run(ctx)
 
 	if err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *Handler) UpdateFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = updateFolderService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (h *Handler) DeleteFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = deleteFolderService.Run(ctx); err != nil {
-		_ = response.InternalServerError(w, r, err)
+		_ = response.Error(w, r, err)
 		return
 	}
 

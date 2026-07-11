@@ -22,7 +22,7 @@ type Domain struct {
 	Domain      string       `json:"domain" db:"domain"`
 	CnameRecord string       `json:"cname_record" db:"cname_record"`
 	TxtRecord   string       `json:"txt_record" db:"txt_record"`
-	Metadata    interface{}  `json:"metadata" db:"metadata"`
+	Metadata    Metadata     `json:"metadata" db:"metadata"`
 	Status      DomainStatus `json:"status" db:"status"`
 	CreatedAt   time.Time    `json:"created_at,omitempty" db:"created_at,omitempty"`
 	UpdatedAt   time.Time    `json:"updated_at,omitempty" db:"updated_at,omitempty"`

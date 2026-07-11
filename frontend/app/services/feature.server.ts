@@ -1,4 +1,4 @@
-import { Feature, FeatureSchema, GetFeatureSchema } from "~/models/feature";
+import { GetFeatureSchema } from "~/models/feature";
 import { api } from "./api.server";
 
 export async function getFeatures(request: Request) {

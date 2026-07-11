@@ -42,6 +42,9 @@ func TestCreateWebhookService_Run(t *testing.T) {
 				},
 			},
 			mockFn: func(s *CreateWebhookService) {
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 				webhookRepo, _ := s.WebhookRepo.(*mocks.MockWebhookRepository)
 				webhookRepo.EXPECT().
 					CreateWebhook(gomock.Any(), gomock.Any()).
@@ -79,6 +82,9 @@ func TestCreateWebhookService_Run(t *testing.T) {
 				},
 			},
 			mockFn: func(s *CreateWebhookService) {
+				memberRepo, _ := s.AppMemberRepo.(*mocks.MockAppMemberRepository)
+				memberRepo.EXPECT().FindAppMemberByAppIDAndUserId(gomock.Any(), "app-id", "user-id").
+					Return(&models.AppMember{Role: models.AppMemberRoleOwner}, nil)
 				webhookRepo, _ := s.WebhookRepo.(*mocks.MockWebhookRepository)
 				webhookRepo.EXPECT().
 					CreateWebhook(gomock.Any(), gomock.Any()).
@@ -96,10 +102,11 @@ func TestCreateWebhookService_Run(t *testing.T) {
 			defer ctrl.Finish()
 
 			service := &CreateWebhookService{
-				App:         tt.args.app,
-				WebhookRepo: mocks.NewMockWebhookRepository(ctrl),
-				User:        tt.args.user,
-				Body:        tt.args.body,
+				App:           tt.args.app,
+				AppMemberRepo: mocks.NewMockAppMemberRepository(ctrl),
+				WebhookRepo:   mocks.NewMockWebhookRepository(ctrl),
+				User:          tt.args.user,
+				Body:          tt.args.body,
 			}
 
 			if tt.mockFn != nil {

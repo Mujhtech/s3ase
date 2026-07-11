@@ -53,7 +53,7 @@ func TestCreateAppService_Run(t *testing.T) {
 				Region:      null.NewString("us-east-1", true),
 				Description: null.NewString("test", true),
 				Bucket:      "test",
-				Metadata:    null.NewString("{}", true),
+				Metadata:    models.Metadata{},
 			},
 			wantErr: false,
 			mockFn: func(s *CreateAppService) {
@@ -101,10 +101,10 @@ func TestCreateAppService_Run(t *testing.T) {
 			s := CreateAppService{
 				AppRepo:       mocks.NewMockAppRepository(ctrl),
 				AppMemberRepo: mocks.NewMockAppMemberRepository(ctrl),
-				ApiKeyRepo:    mocks.NewMockApiKeyRepository(ctrl),
 				User:          tt.args.User,
 				DefaultRegion: "us-east-1",
 				Body:          tt.args.Body,
+				S3:            successfulBucketStore{},
 			}
 
 			if tt.mockFn != nil {
@@ -132,4 +132,15 @@ func TestCreateAppService_Run(t *testing.T) {
 		})
 	}
 
+}
+
+func TestSlugifyProducesS3SafeName(t *testing.T) {
+	require.Equal(t, "my-production-app", slugify("  My Production App!  "))
+	require.Equal(t, "a-b-c", slugify("A---B___C"))
+}
+
+type successfulBucketStore struct{}
+
+func (successfulBucketStore) CheckOrCreateNewBucket(context.Context, string, string) (string, error) {
+	return "", nil
 }

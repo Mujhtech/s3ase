@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS files (
 	size bigint NOT NULL,
 	is_public boolean NOT NULL DEFAULT false,
 	public_id text NOT NULL UNIQUE,
+	status file_status NOT NULL DEFAULT 'pending',
 	
 	metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
 

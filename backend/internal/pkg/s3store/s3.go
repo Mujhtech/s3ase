@@ -2,7 +2,7 @@ package s3store
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -39,9 +39,102 @@ func NewS3Store(cfg *config.Config, opts ...Options) (*S3Store, error) {
 	}
 
 	return &S3Store{
-		client: s3.NewFromConfig(config),
-		cfg:    cfg,
+		client: s3.NewFromConfig(config, func(o *s3.Options) {
+			o.UseAccelerate = false
+
+			// Disable HTTPS and only use HTTP (helpful for debugging requests).
+			o.EndpointOptions.DisableHTTPS = false
+
+			if cfg.Aws.Endpoint != "" {
+				o.BaseEndpoint = &cfg.Aws.Endpoint
+			}
+			o.UsePathStyle = cfg.Aws.UsePathStyle
+			o.Region = cfg.Aws.DefaultRegion
+		}),
+		cfg: cfg,
 	}, nil
+}
+
+func (s *S3Store) GetClient() *s3.Client {
+	return s.client
+}
+
+func (s *S3Store) OpenFile(ctx context.Context, bucket, key, region string) (*s3.GetObjectOutput, error) {
+	if bucket == "" || key == "" {
+		return nil, fmt.Errorf("bucket and object key are required")
+	}
+	return s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	}, func(options *s3.Options) {
+		if region != "" {
+			options.Region = region
+		}
+	})
+}
+
+func (s *S3Store) DeleteFile(ctx context.Context, bucket, key, region string) error {
+	if bucket == "" || key == "" {
+		return fmt.Errorf("bucket and object key are required")
+	}
+	deleteObject := func(objectKey string) error {
+		_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: &bucket,
+			Key:    &objectKey,
+		}, func(options *s3.Options) {
+			if region != "" {
+				options.Region = region
+			}
+		})
+		return err
+	}
+	if err := deleteObject(key); err != nil {
+		return err
+	}
+	if err := deleteObject(key + ".info"); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteBucket removes every object (including tus metadata sidecars) before
+// deleting the bucket itself. S3 only permits deletion of empty buckets.
+func (s *S3Store) DeleteBucket(ctx context.Context, bucket, region string) error {
+	if bucket == "" {
+		return fmt.Errorf("bucket is required")
+	}
+	opts := func(options *s3.Options) {
+		if region != "" {
+			options.Region = region
+		}
+	}
+	var continuationToken *string
+	for {
+		result, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket: &bucket, ContinuationToken: continuationToken,
+		}, opts)
+		if err != nil {
+			return err
+		}
+		if len(result.Contents) > 0 {
+			objects := make([]awsType.ObjectIdentifier, 0, len(result.Contents))
+			for _, object := range result.Contents {
+				objects = append(objects, awsType.ObjectIdentifier{Key: object.Key})
+			}
+			quiet := true
+			if _, err := s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+				Bucket: &bucket, Delete: &awsType.Delete{Objects: objects, Quiet: &quiet},
+			}, opts); err != nil {
+				return err
+			}
+		}
+		if result.IsTruncated == nil || !*result.IsTruncated {
+			break
+		}
+		continuationToken = result.NextContinuationToken
+	}
+	_, err := s.client.DeleteBucket(ctx, &s3.DeleteBucketInput{Bucket: &bucket}, opts)
+	return err
 }
 
 func WithBucket(bucket string) Options {
@@ -85,20 +178,15 @@ func (s *S3Store) CheckOrCreateNewBucket(ctx context.Context, bucket string, reg
 		Bucket: &bucket,
 	}, opts...)
 
-	var notFound *awsType.NotFound
-
-	if err != nil && !errors.As(err, &notFound) {
-		return "", err
-	}
-
-	if existBucket == nil {
-
-		_, err := s.client.CreateBucket(ctx, &s3.CreateBucketInput{
-			Bucket: &bucket,
-			CreateBucketConfiguration: &awsType.CreateBucketConfiguration{
+	if err != nil || existBucket == nil {
+		input := &s3.CreateBucketInput{Bucket: &bucket}
+		if region != "" && region != "us-east-1" {
+			input.CreateBucketConfiguration = &awsType.CreateBucketConfiguration{
 				LocationConstraint: awsType.BucketLocationConstraint(region),
-			},
-		}, func(o *s3.Options) {
+			}
+		}
+
+		_, err := s.client.CreateBucket(ctx, input, func(o *s3.Options) {
 			o.Region = region
 		})
 
@@ -115,7 +203,10 @@ func (s *S3Store) CheckOrCreateNewBucket(ctx context.Context, bucket string, reg
 
 	}
 
-	return *existBucket.BucketRegion, nil
+	if existBucket.BucketRegion != nil {
+		return *existBucket.BucketRegion, nil
+	}
+	return region, nil
 }
 
 func (s *S3Store) SetBucketDefaultPolicy(ctx context.Context, bucket string) error {

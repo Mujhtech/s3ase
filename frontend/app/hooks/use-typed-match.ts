@@ -1,11 +1,11 @@
-import { UIMatch, useMatches } from "@remix-run/react";
+import { UIMatch,useMatches } from "@remix-run/react";
 import {
-  RemixSerializedType,
-  UseDataFunctionReturn,
-  deserializeRemix,
+RemixSerializedType,
+UseDataFunctionReturn,
+deserializeRemix,
 } from "remix-typedjson";
 
-type AppData = any;
+type AppData = unknown;
 
 function useTypedDataFromMatches<T = AppData>({
   id,
@@ -25,11 +25,8 @@ export function useTypedMatchesData<T = AppData>({
   id: string;
   matches?: UIMatch[];
 }): UseDataFunctionReturn<T> | undefined {
-  if (!matches) {
-    matches = useMatches();
-  }
-
-  return useTypedDataFromMatches<T>({ id, matches });
+  const routeMatches = useMatches();
+  return useTypedDataFromMatches<T>({ id, matches: matches ?? routeMatches });
 }
 
 export function useTypedMatchData<T = AppData>(

@@ -40,26 +40,6 @@ func (c *Client) Enqueue(queue QueueName, job JobName, payload *ClientPayload) e
 
 	t := asynq.NewTask(string(job), []byte(data), asynq.Queue(q), asynq.TaskID(id), asynq.ProcessIn(payload.Delay))
 
-	_, err = c.inspector.GetTaskInfo(q, id)
-	if err != nil {
-
-		// message := err.Error()
-		// if ErrQueueNotFound.Error() == message || ErrTaskNotFound.Error() == message {
-		// 	_, err := c.client.Enqueue(t, nil)
-		// 	return err
-		// }
-
-		return err
-	}
-
-	// Delete the task if it already exists
-	err = c.inspector.DeleteTask(q, id)
-
-	if err != nil {
-		return err
-	}
-
-	// Enqueue the task
 	if _, err := c.client.Enqueue(t, nil); err != nil {
 		return err
 	}
@@ -73,7 +53,7 @@ type Formatter struct {
 
 func (c *Client) Monitor() *asynqmon.HTTPHandler {
 	h := asynqmon.New(asynqmon.Options{
-		RootPath:     "/queue/monitoring",
+		RootPath:     "/job/monitoring",
 		RedisConnOpt: c.redisConnOpt,
 		PayloadFormatter: Formatter{
 			aesCfb: c.aesCfb,

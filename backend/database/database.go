@@ -25,7 +25,7 @@ func Connect(ctx context.Context, cfg *config.Config) (*Database, error) {
 		return nil, fmt.Errorf("failed to open the db: %w", err)
 	}
 
-	dbx := sqlx.NewDb(db, cfg.Database.BuildDsn())
+	dbx := sqlx.NewDb(db, string(cfg.Database.Driver))
 
 	if err = pingDatabase(ctx, dbx); err != nil {
 		return nil, fmt.Errorf("failed to ping the db: %w", err)

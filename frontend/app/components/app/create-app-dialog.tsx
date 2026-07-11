@@ -1,36 +1,36 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { useFetcher, useLocation, useNavigation } from "@remix-run/react";
-import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import { Textarea } from "~/components/ui/textarea";
-import FormField from "~/components/ui/form-field";
-import Paragraph from "~/components/ui/paragraph";
-import { useState } from "react";
-import { useForm, useInputControl } from "@conform-to/react";
+import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import FormError from "~/components/ui/form-error";
-import { App, CreateAppFormSchema } from "~/models/app";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { useFetcher } from "@remix-run/react";
+import { Check,ChevronsUpDown } from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+Command,
+CommandEmpty,
+CommandGroup,
+CommandInput,
+CommandItem,
+CommandList,
 } from "~/components/ui/command";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Dialog,
+DialogContent,
+DialogTitle,
+DialogTrigger,
+} from "~/components/ui/dialog";
+import FormError from "~/components/ui/form-error";
+import FormField from "~/components/ui/form-field";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import Paragraph from "~/components/ui/paragraph";
+import {
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from "~/components/ui/popover";
+import { Textarea } from "~/components/ui/textarea";
+import { cn } from "~/lib/utils";
+import { App,CreateAppFormSchema } from "~/models/app";
 
 const regions = [
   "us-east-1",
@@ -148,7 +148,7 @@ export function CreateAppForm({
       </FormField>
       <div>
         <Paragraph>
-          Note: This action will auto create new bucket if doesn't exist with
+          Note: This action will auto create a new bucket if it does not exist with
           the following slug{" "}
           {fields.name.value?.toLowerCase().replace(/\s+/g, "-")}
         </Paragraph>

@@ -1,18 +1,15 @@
-import { z } from "zod";
-import { api } from "./api.server";
-import {
-  Apps,
-  AppsSchema,
-  CreateAppForm,
-  CreateAppResponseSchema,
-  GetApps,
-  GetAppsSchema,
-} from "~/models/app";
 import { createCookieSessionStorage } from "@remix-run/node";
 import { env } from "~/env.server";
+import {
+CreateAppForm,
+CreateAppResponseSchema,
+GetApps,
+GetAppsSchema
+} from "~/models/app";
 import { ServerResponseSchema } from "~/models/default";
+import { api } from "./api.server";
 
-const { commitSession, getSession, destroySession } =
+const { commitSession, getSession } =
   createCookieSessionStorage({
     cookie: {
       name: "__app_session", // use any name you want here
@@ -90,6 +87,15 @@ export async function updateApp(
     request,
     path: `/ui/apps/${id}`,
     body: data,
+    schema: ServerResponseSchema,
+  });
+}
+
+export async function deleteApp(request: Request, id: string, name: string) {
+  return api.delete({
+    request,
+    path: `/ui/apps/${id}`,
+    body: { name },
     schema: ServerResponseSchema,
   });
 }

@@ -1,34 +1,32 @@
 import { parseWithZod } from "@conform-to/zod";
 import {
-  ActionFunction,
-  json,
-  LoaderFunctionArgs,
-  redirect,
+ActionFunction,
+json,
+LoaderFunctionArgs,
+redirect,
 } from "@remix-run/node";
 
-import React, { useState } from "react";
-import CreateFolderDropdown from "~/components/file/create-folder-dropdown";
-import { Button } from "~/components/ui/button";
-import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
-import { MediaUploadSchema } from "~/models/file";
-import { filesPath } from "~/lib/path";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
-import {
-  createFolder,
-  deleteFolder,
-  getFolders,
-  updateFolder,
-} from "~/services/folder.server";
-import { useApp } from "~/hooks/use-apps";
-import { CreateFolderFormSchema } from "~/models/folder";
-import FolderCard from "~/components/file/folder-card";
-import { getFiles } from "~/services/file.server";
+import { useState } from "react";
+import { typedjson,useTypedLoaderData } from "remix-typedjson";
 import CreateFolderDialog from "~/components/file/create-folder-dialog";
-import FileCard from "~/components/file/file-card";
 import DragAndDropArea from "~/components/file/drag-and-drop-area";
-import FilesPageContext from "~/components/file/files-page-context";
-import Paragraph from "~/components/ui/paragraph";
+import FileCard from "~/components/file/file-card";
 import FileLayout from "~/components/file/file-layout";
+import FilesPageContext from "~/components/file/files-page-context";
+import FolderCard from "~/components/file/folder-card";
+import Paragraph from "~/components/ui/paragraph";
+import { useApp } from "~/hooks/use-apps";
+import { filesPath } from "~/lib/path";
+import { MediaUploadSchema } from "~/models/file";
+import { CreateFolderFormSchema } from "~/models/folder";
+import { getFiles } from "~/services/file.server";
+import {
+createFolder,
+deleteFolder,
+getFolders,
+updateFolder,
+} from "~/services/folder.server";
+import { AppSlugParamSchema } from "../_app.app.$appSlug/route";
 
 export const action: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
@@ -42,7 +40,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const { appSlug } = AppSlugParamSchema.parse(params);
 
     switch (submission.value.type) {
-      case "folder":
+      case "folder": {
         const submission = parseWithZod(formData, {
           schema: CreateFolderFormSchema,
         });
@@ -64,6 +62,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         }
 
         break;
+      }
       case "file":
         break;
     }
@@ -75,11 +74,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { appSlug } = AppSlugParamSchema.parse(params);
+  AppSlugParamSchema.parse(params);
 
-  const folders = await getFolders(request);
-
-  const files = await getFiles(request);
+  const [folders, files] = await Promise.all([
+    getFolders(request),
+    getFiles(request),
+  ]);
 
   return typedjson({
     folders,
@@ -109,7 +109,7 @@ export default function Page() {
               <div className="">
                 <h4 className="text-sm font-medium mb-3">Folders</h4>
                 {folders.length > 0 ? (
-                  <div className="grid grid-cols-8 gap-3">
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
                     {folders.map((folder, i) => (
                       <FolderCard key={i} folder={folder} appSlug={app.slug} />
                     ))}
@@ -125,7 +125,7 @@ export default function Page() {
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-3">Files</h4>
                 {files.length > 0 ? (
-                  <div className="grid grid-cols-8 gap-3">
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
                     {files.map((file, i) => (
                       <FileCard key={i} file={file} />
                     ))}

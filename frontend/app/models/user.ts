@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServerResponseSchema } from "./default";
 
 export const UserSchema = z.object({
   id: z.string(),
@@ -12,3 +13,5 @@ export const UserSchema = z.object({
 });
 
 export type User = z.infer<typeof UserSchema>;
+
+export const GetUserSchema = ServerResponseSchema.extend({ data: UserSchema });

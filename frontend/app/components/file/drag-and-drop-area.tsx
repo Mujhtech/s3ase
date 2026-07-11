@@ -1,38 +1,33 @@
-import React, { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useDropzone } from "react-dropzone-esm";
+import { AnimatePresence,motion } from "framer-motion";
 import { CloudUpload } from "lucide-react";
+import React,{ useCallback,useState } from "react";
+import { useDropzone } from "react-dropzone-esm";
+import { useUploadManager } from "./upload-manager";
 
 export default function DragAndDropArea({
   children,
+  folderId,
 }: {
   children: React.ReactNode;
+  folderId?: string;
 }) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
+  const { startUpload } = useUploadManager();
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // setIsUploading(true);
-    // // Simulate upload progress
-    // let progress = 0;
-    // const interval = setInterval(() => {
-    //   progress += 10;
-    //   setUploadProgress(progress);
-    //   if (progress >= 100) {
-    //     clearInterval(interval);
-    //     setTimeout(() => {
-    //       setIsUploading(false);
-    //       setUploadProgress(0);
-    //     }, 500);
-    //   }
-    // }, 200);
-  }, []);
+  const onDrop = useCallback(
+  (acceptedFiles: File[]) => {
+    for (const file of acceptedFiles) {
+    void startUpload(file, folderId).catch((error: unknown) => {
+      console.error("File upload failed", error);
+    });
+    }
+  },
+  [folderId, startUpload]
+  );
 
   const {
     getRootProps,
     getInputProps,
-    isDragActive: dropzoneIsDragActive,
   } = useDropzone({
     onDrop,
     onDragEnter: () => setIsDragActive(true),

@@ -6,3 +6,7 @@ type CreateAppRequestDto struct {
 	Region      string `json:"region,omitempty"`
 	Slug        string `json:"slug,omitempty"`
 }
+
+type DeleteAppRequestDto struct {
+	Name string `json:"name"`
+}

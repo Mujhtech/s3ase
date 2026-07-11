@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/mujhtech/s3ase/api"
+	"github.com/mujhtech/s3ase/cache"
 	"github.com/mujhtech/s3ase/config"
 	"github.com/mujhtech/s3ase/database"
 	"github.com/mujhtech/s3ase/database/store"
@@ -16,6 +17,7 @@ import (
 	"github.com/mujhtech/s3ase/internal/pkg/pubsub"
 	"github.com/mujhtech/s3ase/internal/pkg/s3store"
 	"github.com/mujhtech/s3ase/internal/pkg/sse"
+	"github.com/mujhtech/s3ase/internal/protocol"
 	"github.com/mujhtech/s3ase/internal/redis"
 	"github.com/mujhtech/s3ase/job"
 	"github.com/rs/zerolog"
@@ -87,12 +89,22 @@ func startServer(configFile string, logLevel string) error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			log.Warn().Err(closeErr).Msg("failed to close server database connection")
+		}
+	}()
 
 	redis, err := redis.NewRedis(cfg)
 
 	if err != nil {
 		return fmt.Errorf("failed to connect to redis: %w", err)
+	}
+
+	cache, err := cache.NewCache(cfg, redis)
+
+	if err != nil {
+		return fmt.Errorf("failed to create cache: %w", err)
 	}
 
 	store := store.NewStore(db)
@@ -117,7 +129,22 @@ func startServer(configFile string, logLevel string) error {
 
 	sse := sse.NewStreamer(pubsub)
 
-	app, err := api.New(cfg, ctx, job, store, s3, sse)
+	protocol, err := protocol.NewProtocol(cfg, s3.GetClient(), job, sse)
+
+	if err != nil {
+		return fmt.Errorf("failed to create protocol: %w", err)
+	}
+
+	app, err := api.New(
+		cfg,
+		ctx,
+		cache,
+		job,
+		store,
+		s3,
+		sse,
+		protocol,
+	)
 
 	if err != nil {
 		return fmt.Errorf("failed to create handler: %w", err)

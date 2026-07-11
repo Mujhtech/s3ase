@@ -22,6 +22,14 @@ export function folderPath(appSlug: string, folderId: string) {
   return `${appPath(appSlug)}/folder/${folderId}`;
 }
 
+export function filePath(appSlug: string, fileId: string) {
+  return `${appPath(appSlug)}/file/${fileId}`;
+}
+
+export function fileDownloadPath(appSlug: string, fileId: string) {
+  return `/resources/${appSlug}/files/${fileId}`;
+}
+
 export function apiKeysPath(appSlug: string) {
   return appMenuPath(appSlug, "api-keys");
 }

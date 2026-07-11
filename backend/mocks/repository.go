@@ -267,6 +267,20 @@ func (mr *MockApiKeyRepositoryMockRecorder) FindApiKeyByID(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindApiKeyByID", reflect.TypeOf((*MockApiKeyRepository)(nil).FindApiKeyByID), arg0, arg1)
 }
 
+// FindApiKeyByHash mocks base method
+func (m *MockApiKeyRepository) FindApiKeyByHash(arg0 context.Context, arg1 string) (*models.ApiKey, error) {
+	ret := m.ctrl.Call(m, "FindApiKeyByHash", arg0, arg1)
+	ret0, _ := ret[0].(*models.ApiKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindApiKeyByHash indicates an expected call of FindApiKeyByHash
+func (mr *MockApiKeyRepositoryMockRecorder) FindApiKeyByHash(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindApiKeyByHash", reflect.TypeOf((*MockApiKeyRepository)(nil).FindApiKeyByHash), arg0, arg1)
+}
+
 // DeleteApiKey mocks base method
 func (m *MockApiKeyRepository) DeleteApiKey(arg0 context.Context, arg1 string) error {
 	ret := m.ctrl.Call(m, "DeleteApiKey", arg0, arg1)
@@ -305,6 +319,19 @@ func (m *MockApiKeyRepository) UpdateApiKey(arg0 context.Context, arg1 *models.A
 func (mr *MockApiKeyRepositoryMockRecorder) UpdateApiKey(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApiKey", reflect.TypeOf((*MockApiKeyRepository)(nil).UpdateApiKey), arg0, arg1)
+}
+
+// TouchApiKey mocks base method
+func (m *MockApiKeyRepository) TouchApiKey(arg0 context.Context, arg1 string) error {
+	ret := m.ctrl.Call(m, "TouchApiKey", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TouchApiKey indicates an expected call of TouchApiKey
+func (mr *MockApiKeyRepositoryMockRecorder) TouchApiKey(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TouchApiKey", reflect.TypeOf((*MockApiKeyRepository)(nil).TouchApiKey), arg0, arg1)
 }
 
 // MockUserRepository is a mock of UserRepository interface
