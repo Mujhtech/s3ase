@@ -36,12 +36,13 @@ describe("API Key Service", () => {
       intent: "create",
       description: "New description",
     };
+    setupFetchMock(mockFetch(201, mockApiKeys[0]));
     const result = await createApiKey(mockRequest, newKey);
-    expect(result).toEqual([mockApiKeys[0]]);
+    expect(result).toEqual(mockApiKeys[0]);
   });
 
   it("should update API key", async () => {
-    setupFetchMock(mockFetch(200, { message: "API key updated" }));
+    setupFetchMock(mockFetch(200, null, "API key updated"));
     const updatedKey: CreateApiKeyForm = {
       name: "Updated API Key",
       access: "read",
@@ -49,12 +50,12 @@ describe("API Key Service", () => {
       description: "Updated description",
     };
     const result = await updateApiKey(mockRequest, "1", updatedKey);
-    expect(result).toBeDefined();
+    expect(result).toBe("API key updated");
   });
 
   it("should delete API key", async () => {
-    setupFetchMock(mockFetch(200, { message: "API key deleted" }));
+    setupFetchMock(mockFetch(200, null, "API key deleted"));
     const result = await deleteApiKey(mockRequest, "1");
-    expect(result).toBeDefined();
+    expect(result).toBe("API key deleted");
   });
 });

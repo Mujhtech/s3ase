@@ -6,6 +6,10 @@ describe("Feature Service", () => {
   const mockFeatures = {
     name: "S3ase",
     description: "Simplifying S3 usage through open source.",
+    is_github_auth_enabled: true,
+    is_google_auth_enabled: true,
+    is_aws_configured: true,
+    version: "1.0.0",
   };
 
   beforeEach(() => {

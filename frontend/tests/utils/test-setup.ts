@@ -1,20 +1,25 @@
 import { vi } from "vitest";
 
-export function mockFetch(status: number, responseData: any) {
-  return vi.fn().mockImplementation(() =>
-    Promise.resolve({
-      status,
-      json: () => Promise.resolve({ data: responseData }),
-    })
-  );
+export function mockFetch(
+	status: number,
+	responseData: unknown,
+	message = "request successful"
+) {
+	const body = JSON.stringify({ data: responseData, message });
+	return vi.fn().mockImplementation(() =>
+		Promise.resolve(
+			new Response(body, {
+				status,
+				headers: { "Content-Type": "application/json" },
+			})
+		)
+	);
 }
 
-export const mockRequest = {
-  headers: new Headers({
-    Authorization: "Bearer test-token",
-  }),
-} as Request;
+export const mockRequest = new Request("http://localhost", {
+	headers: { Authorization: "Bearer test-token" },
+});
 
-export function setupFetchMock(impl: any) {
-  global.fetch = impl as any;
+export function setupFetchMock(impl: typeof fetch) {
+	global.fetch = impl;
 }

@@ -35,23 +35,24 @@ describe("Folder Service", () => {
       type: "folder",
       intent: "create",
     };
+    setupFetchMock(mockFetch(201, mockFolders[0]));
     const result = await createFolder(mockRequest, newFolder);
-    expect(result).toEqual([mockFolders[0]]);
+    expect(result).toEqual(mockFolders[0]);
   });
 
   it("should update folder", async () => {
-    setupFetchMock(mockFetch(200, { message: "Folder updated" }));
+    setupFetchMock(mockFetch(200, null, "Folder updated"));
     const result = await updateFolder(mockRequest, "1", {
       name: "New Folder",
       type: "folder",
       intent: "create",
     });
-    expect(result).toBeDefined();
+    expect(result).toBe("Folder updated");
   });
 
   it("should delete folder", async () => {
-    setupFetchMock(mockFetch(200, { message: "Folder deleted" }));
+    setupFetchMock(mockFetch(200, null, "Folder deleted"));
     const result = await deleteFolder(mockRequest, "1");
-    expect(result).toBeDefined();
+    expect(result).toBe("Folder deleted");
   });
 });
