@@ -9,6 +9,9 @@ describe("Feature Service", () => {
     is_github_auth_enabled: true,
     is_google_auth_enabled: true,
     is_aws_configured: true,
+    is_object_storage_configured: true,
+    object_storage_provider: "r2",
+    object_storage_region: "auto",
     version: "1.0.0",
   };
 

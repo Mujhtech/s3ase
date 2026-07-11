@@ -18,6 +18,7 @@ import (
 type CreateAppService struct {
 	Body                *dto.CreateAppRequestDto
 	DefaultRegion       string
+	ForceDefaultRegion  bool
 	AppRepo             store.AppRepository
 	AppMemberRepo       store.AppMemberRepository
 	AppSubscriptionRepo store.AppSubscriptionRepository
@@ -33,7 +34,7 @@ func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
 
 	region := c.DefaultRegion
 
-	if c.Body.Region != "" {
+	if !c.ForceDefaultRegion && c.Body.Region != "" {
 		region = c.Body.Region
 	}
 
@@ -62,7 +63,7 @@ func (c *CreateAppService) Run(ctx context.Context) (*models.App, error) {
 		UpdatedAt:   time.Now(),
 	}
 
-	// create bucket on aws s3
+	// Persist the app only after its object-storage bucket is ready.
 	err := c.AppRepo.CreateApp(ctx, app)
 
 	if err != nil {

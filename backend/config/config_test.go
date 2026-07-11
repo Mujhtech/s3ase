@@ -74,6 +74,39 @@ func Test_LoadConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "cloudflare_r2_config",
+			envVars: map[string]string{
+				"OBJECT_STORAGE_PROVIDER": "r2",
+				"R2_ACCOUNT_ID":           "abc123",
+				"R2_ACCESS_KEY_ID":        "r2-access-key",
+				"R2_SECRET_ACCESS_KEY":    "r2-secret-key",
+				"R2_JURISDICTION":         "eu",
+			},
+			validate: func(t *testing.T, cfg *Config) {
+				require.Equal(t, ObjectStorageProviderR2, cfg.ObjectStorage.Provider)
+				require.Equal(t, "auto", cfg.ObjectStorageRegion())
+				require.Equal(t, "abc123", cfg.R2.AccountID)
+				require.Equal(t, "eu", cfg.R2.Jurisdiction)
+			},
+		},
+		{
+			name: "r2_requires_credentials",
+			envVars: map[string]string{
+				"OBJECT_STORAGE_PROVIDER": "r2",
+				"R2_ACCOUNT_ID":           "abc123",
+			},
+			wantErr:    true,
+			wantErrMsg: "r2 access key id and secret access key are required",
+		},
+		{
+			name: "invalid_object_storage_provider",
+			envVars: map[string]string{
+				"OBJECT_STORAGE_PROVIDER": "unsupported",
+			},
+			wantErr:    true,
+			wantErrMsg: "object storage provider must be s3 or r2",
+		},
+		{
 			name: "invalid_port_number",
 			envVars: map[string]string{
 				"PORT": "invalid",

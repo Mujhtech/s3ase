@@ -30,6 +30,7 @@ PopoverTrigger,
 } from "~/components/ui/popover";
 import { Textarea } from "~/components/ui/textarea";
 import { cn } from "~/lib/utils";
+import { useFeature } from "~/hooks/use-feature";
 import { App,CreateAppFormSchema } from "~/models/app";
 
 const regions = [
@@ -68,7 +69,11 @@ export function CreateAppForm({
   closeDialog?: () => void;
   app?: App;
 }) {
-  const [region, setRegion] = useState<string>(app?.region || "eu-west-2");
+  const { object_storage_provider, object_storage_region } = useFeature();
+  const storageRegions = object_storage_provider === "r2" ? ["auto"] : regions;
+  const [region, setRegion] = useState<string>(
+    app?.region || object_storage_region || "eu-west-2"
+  );
 
   const fetcher = useFetcher();
 
@@ -138,6 +143,7 @@ export function CreateAppForm({
         ) : (
           <SelectRegionDialog
             value={region}
+            regions={storageRegions}
             onChange={(val) => {
               setRegion(val);
             }}
@@ -170,9 +176,11 @@ export function CreateAppForm({
 
 export function SelectRegionDialog({
   value,
+  regions,
   onChange,
 }: {
   value?: string;
+  regions: string[];
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);

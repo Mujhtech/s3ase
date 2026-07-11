@@ -7,6 +7,9 @@ export const FeatureSchema = z.object({
   is_github_auth_enabled: z.boolean(),
   is_google_auth_enabled: z.boolean(),
   is_aws_configured: z.boolean(),
+  is_object_storage_configured: z.boolean(),
+  object_storage_provider: z.enum(["s3", "r2"]),
+  object_storage_region: z.string(),
   version: z.string(),
 });
 

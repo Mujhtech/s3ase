@@ -9,6 +9,7 @@ import (
 type DatabaseDriver string
 type PubsubProvider string
 type CacheProvider string
+type ObjectStorageProvider string
 
 const (
 	DatabaseDriverPostgres DatabaseDriver = "postgres"
@@ -25,23 +26,32 @@ const (
 
 	CacheProviderRedis    CacheProvider = "redis"
 	CacheProviderInMemory CacheProvider = "inmemory"
+
+	ObjectStorageProviderS3 ObjectStorageProvider = "s3"
+	ObjectStorageProviderR2 ObjectStorageProvider = "r2"
 )
 
 type Config struct {
-	Environment       string   `json:"environment" envconfig:"NODE_ENV"`
-	EncryptionKey     string   `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
-	DomainCnameTarget string   `json:"domain_cname_target" envconfig:"DOMAIN_CNAME_TARGET"`
-	Database          Database `json:"database"`
-	Redis             Redis    `json:"redis"`
-	Aws               Aws      `json:"aws"`
-	Server            Server   `json:"server"`
-	Auth              Auth     `json:"auth"`
-	Email             Email    `json:"email"`
-	Job               Job      `json:"job"`
-	Pubsub            Pubsub   `json:"pubsub"`
-	Protocol          Protocol `json:"protocol"`
-	Cors              Cors     `json:"cors"`
-	Cache             Cache    `json:"cache"`
+	Environment       string        `json:"environment" envconfig:"NODE_ENV"`
+	EncryptionKey     string        `json:"encryption_key" envconfig:"ENCRYPTION_KEY"`
+	DomainCnameTarget string        `json:"domain_cname_target" envconfig:"DOMAIN_CNAME_TARGET"`
+	Database          Database      `json:"database"`
+	Redis             Redis         `json:"redis"`
+	Aws               Aws           `json:"aws"`
+	Server            Server        `json:"server"`
+	Auth              Auth          `json:"auth"`
+	Email             Email         `json:"email"`
+	Job               Job           `json:"job"`
+	Pubsub            Pubsub        `json:"pubsub"`
+	Protocol          Protocol      `json:"protocol"`
+	Cors              Cors          `json:"cors"`
+	Cache             Cache         `json:"cache"`
+	ObjectStorage     ObjectStorage `json:"object_storage"`
+	R2                R2            `json:"r2"`
+}
+
+type ObjectStorage struct {
+	Provider ObjectStorageProvider `json:"provider" envconfig:"OBJECT_STORAGE_PROVIDER"`
 }
 
 type Cache struct {
@@ -76,6 +86,22 @@ type Aws struct {
 	SecretKey     string `json:"secret_key" envconfig:"AWS_SECRET_KEY"`
 	Endpoint      string `json:"endpoint" envconfig:"AWS_ENDPOINT"`
 	UsePathStyle  bool   `json:"use_path_style" envconfig:"AWS_USE_PATH_STYLE"`
+}
+
+// R2 defines Cloudflare R2 S3 API configuration. The endpoint and required
+// auto region are derived from the account ID and optional jurisdiction.
+type R2 struct {
+	AccountID    string `json:"account_id" envconfig:"R2_ACCOUNT_ID"`
+	AccessKeyID  string `json:"access_key_id" envconfig:"R2_ACCESS_KEY_ID"`
+	SecretKey    string `json:"secret_key" envconfig:"R2_SECRET_ACCESS_KEY"`
+	Jurisdiction string `json:"jurisdiction" envconfig:"R2_JURISDICTION"`
+}
+
+func (c *Config) ObjectStorageRegion() string {
+	if c.ObjectStorage.Provider == ObjectStorageProviderR2 {
+		return "auto"
+	}
+	return c.Aws.DefaultRegion
 }
 
 // Server defines server configuration
